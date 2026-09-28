@@ -1,20 +1,18 @@
 # Bangkok Flood Climb
 
-Only-Up style endless vertical climb set in a neon Bangkok flood.
+Only-Up style endless vertical climb through a flooded Bangkok.
 
-**Play:** climb rooftops, tuk-tuk roofs, skytrain pillars, neon signs & billboards. Don't fall in the rising water.
+**Play:** climb concrete rooftops, tuk-tuks, skytrain pillars & street signs. Stay above the muddy rising water.
 
 ## Controls
-- **Keyboard:** ← → / A D move · Space / W / ↑ jump (hold for higher)
-- **Mobile:** on-screen buttons or tap zones
+- **Keyboard:** ← → / A D move · Space / W / ↑ jump (hold slightly higher)
+- **Mobile:** on-screen buttons
 
-## Features (V1)
-- Endless upward platform generation
-- Rising flood water
-- Checkpoints
-- Height score + local best
-- Title / game over / mute / restart
-- Neon cartoon Bangkok vibe
+## V1.1
+- Soft muted flood city look (concrete, metal, muddy water)
+- Fog, rain, gentle waves
+- Shorter jumps + snappier gravity
+- Height score, checkpoints, mute, restart
 
 ## Live
-GitHub Pages: https://whytyx.github.io/bangkok-flood-climb/
+https://whytyx.github.io/bangkok-flood-climb/
