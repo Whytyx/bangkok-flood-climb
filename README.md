@@ -1,12 +1,17 @@
 # Bangkok Flood Climb
 
-Only-Up style endless vertical climb through a flooded Bangkok.
+Only-Up style endless climb through flooded Bangkok.
 
-## V1.3
-- Camera keeps player centered on mobile portrait (no left-edge clipping)
-- Luk thung–inspired procedural BGM
-- Bird obstacles
-- Character customize (shirt / skin / hat) on title & pause
-- Soft 2.5D muted flood look
+## V1.4 hazards
+- Birds knock you into a fall/stun
+- Swaying & moving platforms
+- Slippery wet roofs
+- Wider gaps as you climb
+- Wind gusts
+- Wires/poles to dodge
+- Flood surge (faster rising water)
+- Collapsing signs after a brief stand
+
+Camera stays centered. Luk thung BGM + character customize.
 
 **Live:** https://whytyx.github.io/bangkok-flood-climb/
