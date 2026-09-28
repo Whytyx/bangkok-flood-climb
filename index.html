@@ -5,40 +5,40 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="theme-color" content="#6b7a86">
+<meta name="theme-color" content="#7a8790">
 <title>Bangkok Flood Climb</title>
 <style>
-*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;touch-action:none;user-select:none}
-html,body{width:100%;height:100%;overflow:hidden;background:#6b7a86;font-family:'Segoe UI',system-ui,sans-serif}
-#game{display:block;width:100%;height:100%;position:fixed;inset:0}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
+html,body{width:100%;height:100%;overflow:hidden;background:#7a8790;font-family:'Segoe UI',system-ui,sans-serif;touch-action:none}
+#game{display:block;width:100%;height:100%;position:fixed;inset:0;z-index:1}
 #ui{position:fixed;inset:0;pointer-events:none;z-index:10}
-#ui>*{pointer-events:auto}
+#ui .interactive{pointer-events:auto}
 .hud{position:absolute;top:0;left:0;right:0;padding:12px 16px;display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
-.hud-badge{background:rgba(45,52,58,.78);border:1px solid rgba(255,255,255,.18);border-radius:10px;padding:8px 14px;color:#f0eee8;backdrop-filter:blur(8px);box-shadow:0 2px 10px rgba(0,0,0,.25)}
-.hud-badge .label{font-size:10px;letter-spacing:1px;color:#b8c0c8;text-transform:uppercase}
+.hud-badge{background:rgba(42,48,54,.8);border:1px solid rgba(255,255,255,.16);border-radius:10px;padding:8px 14px;color:#f0eee8;backdrop-filter:blur(8px);box-shadow:0 3px 12px rgba(0,0,0,.28)}
+.hud-badge .label{font-size:10px;letter-spacing:1px;color:#b0b8c0;text-transform:uppercase}
 .hud-badge .val{font-size:22px;font-weight:800;color:#f5f2eb}
 .hud-right{display:flex;gap:8px}
-.icon-btn{width:44px;height:44px;border-radius:10px;border:1px solid rgba(255,255,255,.2);background:rgba(45,52,58,.78);color:#e8e4dc;font-size:18px;cursor:pointer;backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+.icon-btn{width:44px;height:44px;border-radius:10px;border:1px solid rgba(255,255,255,.2);background:rgba(42,48,54,.8);color:#e8e4dc;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.22)}
 .icon-btn:active{transform:scale(.94)}
-#titleScreen,#gameOverScreen{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(40,48,54,.82);backdrop-filter:blur(8px);text-align:center;padding:24px}
-#titleScreen h1{font-size:clamp(26px,7.5vw,48px);font-weight:800;color:#f0ebe3;margin-bottom:6px;letter-spacing:.5px;text-shadow:0 2px 12px rgba(0,0,0,.35)}
-#titleScreen .sub{color:#a8b4bc;font-size:13px;margin-bottom:24px;letter-spacing:2px;text-transform:uppercase}
-#titleScreen .tip,#gameOverScreen .tip{color:#9aa6ae;font-size:13px;max-width:340px;line-height:1.55;margin:14px 0 26px}
-.btn{pointer-events:auto;padding:14px 36px;font-size:17px;font-weight:700;border:none;border-radius:10px;cursor:pointer;background:#5a6e5c;color:#f5f2eb;box-shadow:0 3px 0 #3d4d40,0 4px 14px rgba(0,0,0,.3);letter-spacing:.5px}
-.btn:active{transform:translateY(2px);box-shadow:0 1px 0 #3d4d40,0 2px 8px rgba(0,0,0,.25)}
-.btn.secondary{background:#5c6a75;box-shadow:0 3px 0 #3e4850,0 4px 14px rgba(0,0,0,.3);margin-top:12px}
-#gameOverScreen h2{font-size:clamp(24px,6.5vw,38px);color:#c4b8a8;margin-bottom:8px;text-shadow:0 2px 8px rgba(0,0,0,.3)}
+#titleScreen,#gameOverScreen{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(38,44,50,.84);backdrop-filter:blur(8px);text-align:center;padding:24px}
+#titleScreen h1{font-size:clamp(26px,7.5vw,48px);font-weight:800;color:#f0ebe3;margin-bottom:6px;letter-spacing:.5px;text-shadow:0 2px 14px rgba(0,0,0,.4)}
+#titleScreen .sub{color:#a4b0b8;font-size:13px;margin-bottom:24px;letter-spacing:2px;text-transform:uppercase}
+#titleScreen .tip,#gameOverScreen .tip{color:#96a2aa;font-size:13px;max-width:340px;line-height:1.55;margin:14px 0 26px}
+.btn{padding:14px 36px;font-size:17px;font-weight:700;border:none;border-radius:10px;cursor:pointer;background:#5a6e5c;color:#f5f2eb;box-shadow:0 3px 0 #3d4d40,0 4px 14px rgba(0,0,0,.3);letter-spacing:.5px}
+.btn:active{transform:translateY(2px);box-shadow:0 1px 0 #3d4d40}
+.btn.secondary{background:#5c6a75;box-shadow:0 3px 0 #3e4850;margin-top:12px}
+#gameOverScreen h2{font-size:clamp(24px,6.5vw,38px);color:#c4b8a8;margin-bottom:8px}
 #gameOverScreen .score-big{font-size:clamp(34px,9vw,58px);font-weight:900;color:#e8e0d4;margin:8px 0}
 #gameOverScreen .best{color:#a8b8a0;font-size:15px;margin-bottom:8px}
 .hidden{display:none!important}
-#mobileControls{position:absolute;bottom:0;left:0;right:0;height:140px;display:none;pointer-events:none}
+#mobileControls{position:absolute;bottom:0;left:0;right:0;height:150px;display:none;pointer-events:none;z-index:20}
 #mobileControls.visible{display:block}
-.mc-zone{position:absolute;bottom:20px;width:70px;height:70px;border-radius:50%;background:rgba(40,48,54,.4);border:2px solid rgba(255,255,255,.22);pointer-events:auto;display:flex;align-items:center;justify-content:center;font-size:22px;color:rgba(255,255,255,.65);backdrop-filter:blur(4px)}
-.mc-zone:active,.mc-zone.active{background:rgba(90,110,92,.5);border-color:rgba(200,210,190,.55)}
-#mcLeft{left:20px}
+.mc-zone{position:absolute;bottom:24px;width:72px;height:72px;border-radius:50%;background:rgba(35,42,48,.45);border:2px solid rgba(255,255,255,.28);pointer-events:auto;display:flex;align-items:center;justify-content:center;font-size:22px;color:rgba(255,255,255,.75);backdrop-filter:blur(4px);touch-action:none}
+.mc-zone:active,.mc-zone.active{background:rgba(90,110,92,.55);border-color:rgba(200,210,190,.6);transform:scale(.96)}
+#mcLeft{left:18px}
 #mcRight{left:100px}
-#mcJump{right:20px;width:80px;height:80px;background:rgba(70,85,72,.4);border-color:rgba(180,195,170,.4)}
-#watermark{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);color:rgba(255,255,255,.22);font-size:10px;letter-spacing:1px;pointer-events:none}
+#mcJump{right:18px;width:86px;height:86px;bottom:28px;background:rgba(70,88,74,.5);border-color:rgba(190,205,180,.45);font-size:28px}
+#watermark{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);color:rgba(255,255,255,.2);font-size:10px;letter-spacing:1px;pointer-events:none}
 </style>
 </head>
 <body>
@@ -47,31 +47,31 @@ html,body{width:100%;height:100%;overflow:hidden;background:#6b7a86;font-family:
   <div class="hud" id="hud" style="display:none">
     <div class="hud-badge"><div class="label">Height</div><div class="val" id="heightVal">0 m</div></div>
     <div class="hud-right">
-      <button class="icon-btn" id="muteBtn" title="Mute">🔊</button>
-      <button class="icon-btn" id="restartBtn" title="Restart">↻</button>
+      <button class="icon-btn interactive" id="muteBtn" title="Mute" type="button">🔊</button>
+      <button class="icon-btn interactive" id="restartBtn" title="Restart" type="button">↻</button>
     </div>
   </div>
-  <div id="titleScreen">
+  <div id="titleScreen" class="interactive">
     <h1>BANGKOK FLOOD CLIMB</h1>
     <div class="sub">Only Up · Flood City</div>
-    <p class="tip">The Chao Phraya overflowed. Climb concrete rooftops, tuk-tuks, skytrain pillars & street signs — stay above the muddy water.</p>
-    <button class="btn" id="startBtn">START CLIMB</button>
-    <p class="tip" style="margin-top:20px;font-size:11px">← → / A D move · Space / W / ↑ jump (hold slightly higher)<br>Mobile: on-screen buttons</p>
+    <p class="tip">The Chao Phraya overflowed. Climb rooftops, tuk-tuks, skytrain pillars &amp; street signs — stay above the muddy water.</p>
+    <button class="btn interactive" id="startBtn" type="button">START CLIMB</button>
+    <p class="tip" style="margin-top:20px;font-size:11px">← → / A D move · Space / W / ↑ jump (hold a bit higher)<br>Mobile: on-screen buttons</p>
   </div>
-  <div id="gameOverScreen" class="hidden">
+  <div id="gameOverScreen" class="hidden interactive">
     <h2>SPLASHED!</h2>
     <div class="score-big" id="finalHeight">0 m</div>
     <div class="best" id="bestHeight">Best: 0 m</div>
     <p class="tip">The flood got you. Climb higher next time.</p>
-    <button class="btn" id="retryBtn">TRY AGAIN</button>
-    <button class="btn secondary" id="menuBtn">TITLE</button>
+    <button class="btn interactive" id="retryBtn" type="button">TRY AGAIN</button>
+    <button class="btn secondary interactive" id="menuBtn" type="button">TITLE</button>
   </div>
   <div id="mobileControls">
-    <div class="mc-zone" id="mcLeft">◀</div>
-    <div class="mc-zone" id="mcRight">▶</div>
-    <div class="mc-zone" id="mcJump">⬆</div>
+    <div class="mc-zone" id="mcLeft" role="button" aria-label="Left">◀</div>
+    <div class="mc-zone" id="mcRight" role="button" aria-label="Right">▶</div>
+    <div class="mc-zone" id="mcJump" role="button" aria-label="Jump">⬆</div>
   </div>
-  <div id="watermark">BANGKOK FLOOD CLIMB V1.1</div>
+  <div id="watermark">BANGKOK FLOOD CLIMB V1.2</div>
 </div>
 <script>
 (function(){
@@ -85,8 +85,8 @@ function resize(){
   DPR = Math.min(window.devicePixelRatio || 1, 2);
   W = window.innerWidth;
   H = window.innerHeight;
-  canvas.width = W * DPR;
-  canvas.height = H * DPR;
+  canvas.width = Math.floor(W * DPR);
+  canvas.height = Math.floor(H * DPR);
   canvas.style.width = W + 'px';
   canvas.style.height = H + 'px';
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
@@ -99,47 +99,98 @@ let state = STATE.TITLE;
 let muted = false;
 let bestHeight = parseInt(localStorage.getItem('bfc_best') || '0', 10);
 
-const keys = {};
-const touch = { left:false, right:false, jump:false };
-let jumpBuf = 0;
+/* ── Input: edge + held + jump buffer ── */
+const keysDown = Object.create(null);
+const input = { left:false, right:false, jumpHeld:false, jumpPressed:false };
+let jumpBuffer = 0; // frames remaining to honor a jump press
+
+function pressJump(){
+  input.jumpHeld = true;
+  input.jumpPressed = true;
+  jumpBuffer = 14;
+}
+function releaseJump(){
+  input.jumpHeld = false;
+}
 
 window.addEventListener('keydown', e => {
-  keys[e.code] = true;
-  if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code)) e.preventDefault();
-  if(e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'KeyW') jumpBuf = 8;
+  if(keysDown[e.code]) return; // ignore OS key repeat for jump edge
+  keysDown[e.code] = true;
+  if(e.code === 'ArrowLeft' || e.code === 'KeyA') input.left = true;
+  if(e.code === 'ArrowRight' || e.code === 'KeyD') input.right = true;
+  if(e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'KeyW'){
+    e.preventDefault();
+    pressJump();
+  }
+  if(['ArrowDown','ArrowLeft','ArrowRight'].includes(e.code)) e.preventDefault();
+}, {passive:false});
+
+window.addEventListener('keyup', e => {
+  keysDown[e.code] = false;
+  if(e.code === 'ArrowLeft' || e.code === 'KeyA') input.left = false;
+  if(e.code === 'ArrowRight' || e.code === 'KeyD') input.right = false;
+  if(e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'KeyW') releaseJump();
 });
-window.addEventListener('keyup', e => { keys[e.code] = false; });
+
+window.addEventListener('blur', () => {
+  for(const k of Object.keys(keysDown)) keysDown[k] = false;
+  input.left = input.right = input.jumpHeld = false;
+});
 
 function isMobile(){
-  return ('ontouchstart' in window) || navigator.maxTouchPoints > 0 || W < 800;
+  return ('ontouchstart' in window) || navigator.maxTouchPoints > 0 || W < 820;
 }
 
 const mc = document.getElementById('mobileControls');
-function bindZone(el, prop){
-  const on = e => { e.preventDefault(); touch[prop] = true; el.classList.add('active'); if(prop==='jump') jumpBuf=8; };
-  const off = e => { e.preventDefault(); touch[prop] = false; el.classList.remove('active'); };
-  el.addEventListener('touchstart', on, {passive:false});
-  el.addEventListener('touchend', off, {passive:false});
-  el.addEventListener('touchcancel', off, {passive:false});
-  el.addEventListener('mousedown', on);
-  el.addEventListener('mouseup', off);
-  el.addEventListener('mouseleave', off);
+
+function bindHold(el, onPress, onRelease){
+  const down = e => {
+    e.preventDefault();
+    e.stopPropagation();
+    el.classList.add('active');
+    onPress();
+  };
+  const up = e => {
+    e.preventDefault();
+    e.stopPropagation();
+    el.classList.remove('active');
+    onRelease();
+  };
+  el.addEventListener('pointerdown', down);
+  el.addEventListener('pointerup', up);
+  el.addEventListener('pointercancel', up);
+  el.addEventListener('pointerleave', e => { if(el.classList.contains('active')) up(e); });
+  // Fallback touch (older mobile)
+  el.addEventListener('touchstart', down, {passive:false});
+  el.addEventListener('touchend', up, {passive:false});
+  el.addEventListener('touchcancel', up, {passive:false});
 }
-bindZone(document.getElementById('mcLeft'), 'left');
-bindZone(document.getElementById('mcRight'), 'right');
-bindZone(document.getElementById('mcJump'), 'jump');
 
-canvas.addEventListener('touchstart', e => {
+bindHold(document.getElementById('mcLeft'),
+  () => { input.left = true; },
+  () => { input.left = false; });
+bindHold(document.getElementById('mcRight'),
+  () => { input.right = true; },
+  () => { input.right = false; });
+bindHold(document.getElementById('mcJump'),
+  () => { pressJump(); },
+  () => { releaseJump(); });
+
+/* Canvas tap zones only when mobile controls hidden — avoid double-firing with buttons */
+canvas.addEventListener('pointerdown', e => {
   if(state !== STATE.PLAY) return;
-  const x = e.touches[0].clientX;
-  if(x < W * 0.33) touch.left = true;
-  else if(x > W * 0.66) touch.right = true;
-  else { jumpBuf = 8; touch.jump = true; }
-}, {passive:true});
-canvas.addEventListener('touchend', () => {
-  touch.left = false; touch.right = false; touch.jump = false;
-}, {passive:true});
+  if(mc.classList.contains('visible')) return;
+  const x = e.clientX;
+  if(x < W * 0.3) input.left = true;
+  else if(x > W * 0.7) input.right = true;
+  else pressJump();
+});
+canvas.addEventListener('pointerup', () => {
+  if(mc.classList.contains('visible')) return;
+  input.left = false; input.right = false; releaseJump();
+});
 
+/* ── Audio ── */
 let audioCtx = null;
 function ensureAudio(){
   if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -157,39 +208,42 @@ function beep(freq, dur, type, vol){
     g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
     o.connect(g); g.connect(audioCtx.destination);
     o.start(); o.stop(audioCtx.currentTime + dur);
-  }catch(e){}
+  }catch(err){}
 }
-function sfxJump(){ beep(220, 0.06, 'triangle', 0.04); setTimeout(()=>beep(300,0.05,'triangle',0.03),35); }
-function sfxLand(){ beep(100, 0.04, 'sine', 0.035); }
-function sfxCheckpoint(){ beep(400,0.07,'sine',0.04); setTimeout(()=>beep(500,0.09,'sine',0.04),60); }
-function sfxSplash(){ beep(70,0.35,'sawtooth',0.05); setTimeout(()=>beep(45,0.4,'sawtooth',0.035),90); }
-function sfxStart(){ beep(260,0.08,'triangle',0.04); setTimeout(()=>beep(320,0.1,'triangle',0.035),70); }
+function sfxJump(){ beep(240, 0.06, 'triangle', 0.04); setTimeout(()=>beep(340,0.05,'triangle',0.03),30); }
+function sfxLand(){ beep(95, 0.04, 'sine', 0.03); }
+function sfxCheckpoint(){ beep(380,0.07,'sine',0.04); setTimeout(()=>beep(480,0.09,'sine',0.035),55); }
+function sfxSplash(){ beep(65,0.35,'sawtooth',0.045); setTimeout(()=>beep(42,0.4,'sawtooth',0.03),90); }
+function sfxStart(){ beep(250,0.08,'triangle',0.035); setTimeout(()=>beep(310,0.1,'triangle',0.03),70); }
 
-/* V1.1 physics: shorter jumps, snappier gravity, modest hold */
-const GRAVITY = 0.92;
-const MOVE_ACC = 0.85;
-const MOVE_MAX = 4.6;
-const FRICTION = 0.78;
-const JUMP_V = -9.6;
-const JUMP_HOLD = -0.22;
-const COYOTE = 5;
+/* ── Physics V1.2: playable upward jump, not neon-crazy ──
+   Peak ~90–110px with hold; gravity snappy; gaps match. */
+const GRAVITY = 0.78;
+const MOVE_ACC = 0.95;
+const MOVE_MAX = 5.2;
+const FRICTION_G = 0.76;
+const FRICTION_A = 0.92;
+const JUMP_V = -12.4;       // strong enough to climb
+const JUMP_HOLD_FORCE = -0.42; // modest extra while held
+const JUMP_HOLD_MAX_FRAMES = 12;
+const COYOTE_MAX = 8;
 const WORLD_W = 880;
+const DEPTH = 12; // faux-3D extrusion px
 
 let player, platforms, particles, decorations, landmarks;
 let cameraY, waterY, waterSpeed, highestY, scoreHeight, checkpointY;
-let frame, rain, mist, lastPlatY, justLanded;
+let frame, rain, mist, lastPlatY;
 
 const PLATFORM_TYPES = [
-  { name:'rooftop', w:[110,200], h:20, color:'#8a8f94', accent:'#6e747a', roof:'#7a6060' },
-  { name:'sign', w:[70,100], h:14, color:'#6b7076', accent:'#9a8f5a', roof:null },
-  { name:'tuktuk', w:[85,110], h:15, color:'#c4a35a', accent:'#8b7355', roof:null },
-  { name:'pillar', w:[48,64], h:22, color:'#9a9ea3', accent:'#7a7e84', roof:null },
-  { name:'billboard', w:[130,180], h:16, color:'#6a7078', accent:'#8a9098', roof:null },
-  { name:'awning', w:[75,120], h:12, color:'#8b5a4a', accent:'#a07060', roof:null },
-  { name:'boat', w:[95,130], h:14, color:'#5a6a72', accent:'#7a8a90', roof:null },
-  { name:'crane', w:[55,90], h:14, color:'#b08940', accent:'#8a6a30', roof:null },
+  { name:'rooftop', w:[110,200], h:18, top:'#9aa0a6', side:'#6e747c', front:'#848a92' },
+  { name:'sign', w:[72,105], h:14, top:'#8a9096', side:'#5c6268', front:'#70767c' },
+  { name:'tuktuk', w:[88,112], h:15, top:'#d4b56a', side:'#8a7048', front:'#c4a35a' },
+  { name:'pillar', w:[50,66], h:22, top:'#b0b4b8', side:'#7a8086', front:'#9a9ea4' },
+  { name:'billboard', w:[130,180], h:15, top:'#8a9098', side:'#5a6068', front:'#6e747c' },
+  { name:'awning', w:[78,122], h:12, top:'#a07060', side:'#6a4840', front:'#8b5a4a' },
+  { name:'boat', w:[95,130], h:14, top:'#7a8a90', side:'#4a5a62', front:'#5a6a72' },
+  { name:'crane', w:[58,92], h:14, top:'#c9a050', side:'#7a6028', front:'#b08940' },
 ];
-
 const SIGN_TEXTS = ['SOMBAT','7-11','PAD THAI','BTS','ตลาด','ก๋วยเตี๋ยว','SIAM','TOM YUM','CHAOPHRAYA'];
 
 function rand(a,b){ return a + Math.random()*(b-a); }
@@ -199,7 +253,8 @@ function pick(arr){ return arr[randi(0,arr.length-1)]; }
 function makePlayer(x, y){
   return {
     x, y, vx:0, vy:0, w:26, h:38,
-    onGround:false, coyote:0, jumpHeld:false,
+    onGround:false, coyote:0,
+    jumpHoldFrames:0,
     facing:1, anim:0, squish:1, stretch:1,
     alive:true
   };
@@ -210,29 +265,29 @@ function makePlatform(x, y, type){
   const w = rand(t.w[0], t.w[1]);
   return {
     x: x - w/2, y, w, h: t.h, type: t.name,
-    color: t.color, accent: t.accent, roof: t.roof,
+    top: t.top, side: t.side, front: t.front,
     label: (t.name === 'sign' || t.name === 'billboard') ? pick(SIGN_TEXTS) : null,
     checkpoint: false,
     bob: Math.random()*Math.PI*2,
-    stain: Math.random()
+    stain: Math.random(),
+    depth: DEPTH + (t.name === 'pillar' ? 4 : 0)
   };
 }
 
 function generateInitialPlatforms(){
   platforms = [];
   const start = makePlatform(WORLD_W/2, 0, PLATFORM_TYPES[0]);
-  start.w = 190; start.x = WORLD_W/2 - 95; start.checkpoint = true;
+  start.w = 200; start.x = WORLD_W/2 - 100; start.checkpoint = true;
   platforms.push(start);
 
-  let y = -55;
+  let y = -60;
   let prevX = WORLD_W/2;
-  for(let i = 0; i < 45; i++){
-    /* Tight gaps for short jumps */
-    const gap = rand(42, 78);
+  for(let i = 0; i < 48; i++){
+    const gap = rand(50, 88); // match ~90–110 jump peak
     y -= gap;
-    let dx = rand(-95, 95);
-    if(i > 6 && Math.random() < 0.12) dx = (Math.random()<0.5?-1:1)*rand(100, 125);
-    let nx = Math.max(70, Math.min(WORLD_W - 70, prevX + dx));
+    let dx = rand(-110, 110);
+    if(i > 8 && Math.random() < 0.1) dx = (Math.random()<0.5?-1:1)*rand(115, 145);
+    const nx = Math.max(70, Math.min(WORLD_W - 70, prevX + dx));
     const p = makePlatform(nx, y);
     if(i > 0 && i % 8 === 0) p.checkpoint = true;
     platforms.push(p);
@@ -243,84 +298,79 @@ function generateInitialPlatforms(){
 
 function extendPlatforms(){
   while(lastPlatY > player.y - H * 3){
-    const gap = rand(42, 80);
+    const gap = rand(50, 90);
     lastPlatY -= gap;
     const last = platforms[platforms.length - 1];
     const prevX = last.x + last.w/2;
-    let dx = rand(-100, 100);
-    if(Math.random() < 0.1) dx = (Math.random()<0.5?-1:1)*rand(105, 128);
+    let dx = rand(-115, 115);
+    if(Math.random() < 0.1) dx = (Math.random()<0.5?-1:1)*rand(120, 150);
     const nx = Math.max(65, Math.min(WORLD_W - 65, prevX + dx));
     const p = makePlatform(nx, lastPlatY);
     if(platforms.length % 8 === 0) p.checkpoint = true;
     platforms.push(p);
   }
-  const cullY = Math.max(waterY, cameraY + H) + 220;
+  const cullY = Math.max(waterY, cameraY + H) + 240;
   platforms = platforms.filter(p => p.y < cullY || p.checkpoint);
 }
 
 function makeDecorations(){
   decorations = [];
-  for(let i = 0; i < 36; i++){
+  for(let i = 0; i < 34; i++){
     decorations.push({
-      kind: 'building',
       x: rand(-80, WORLD_W + 80),
-      y: rand(-3200, 250),
-      w: rand(50, 140),
-      h: rand(90, 320),
-      shade: rand(0.25, 0.55),
-      windows: Math.random() < 0.65,
-      tone: pick(['#5a6068','#4e555c','#636a70','#555c64','#6a6862'])
+      y: rand(-3400, 280),
+      w: rand(55, 145),
+      h: rand(100, 340),
+      shade: rand(0.3, 0.6),
+      windows: Math.random() < 0.7,
+      front: pick(['#5e646c','#555c64','#686e74','#5a6058','#626870']),
+      side: pick(['#4a5058','#434850','#50565c']),
+      top: pick(['#7a8088','#707880','#828890'])
     });
   }
   landmarks = [
     { kind:'wat', x: 90, baseY: -420 },
-    { kind:'bts', x: WORLD_W - 110, baseY: -950 },
-    { kind:'tower', x: WORLD_W/2 + 180, baseY: -1700 },
+    { kind:'bts', x: WORLD_W - 110, baseY: -960 },
+    { kind:'tower', x: WORLD_W/2 + 180, baseY: -1720 },
   ];
 }
 
 function makeRain(){
   rain = [];
-  for(let i = 0; i < 70; i++){
-    rain.push({
-      x: Math.random() * W,
-      y: Math.random() * H,
-      len: rand(6, 14),
-      spd: rand(5, 11),
-      alpha: rand(0.08, 0.22)
-    });
+  for(let i = 0; i < 65; i++){
+    rain.push({ x: Math.random()*W, y: Math.random()*H, len: rand(6,13), spd: rand(5,10), alpha: rand(0.08,0.2) });
   }
   mist = [];
   for(let i = 0; i < 10; i++){
-    mist.push({
-      x: rand(-50, W+50),
-      y: rand(H*0.3, H*0.9),
-      w: rand(120, 280),
-      h: rand(40, 90),
-      a: rand(0.04, 0.1),
-      spd: rand(0.15, 0.4)
-    });
+    mist.push({ x: rand(-50,W+50), y: rand(H*0.35,H*0.92), w: rand(130,300), h: rand(40,95), a: rand(0.04,0.1), spd: rand(0.12,0.35) });
   }
 }
 
 function resetGame(fromCheckpoint){
+  input.jumpPressed = false;
+  jumpBuffer = 0;
   if(!fromCheckpoint || checkpointY === undefined){
     generateInitialPlatforms();
-    player = makePlayer(WORLD_W/2, -40);
+    player = makePlayer(WORLD_W/2, -42);
+    // Place firmly on start platform
+    player.y = -player.h/2;
+    player.onGround = true;
+    player.coyote = COYOTE_MAX;
     checkpointY = 0;
-    waterY = 170;
+    waterY = 180;
     waterSpeed = 0.014;
     highestY = 0;
   } else {
     const cp = platforms.find(p => p.checkpoint && Math.abs(p.y - checkpointY) < 5) || platforms[0];
-    player = makePlayer(cp.x + cp.w/2, cp.y - 40);
-    waterY = Math.min(waterY, checkpointY + 240);
+    player = makePlayer(cp.x + cp.w/2, cp.y - player.h/2);
+    player.onGround = true;
+    player.coyote = COYOTE_MAX;
+    waterY = Math.min(waterY, checkpointY + 250);
   }
   player.alive = true;
   cameraY = player.y - H * 0.55;
   scoreHeight = 0;
   particles = [];
-  justLanded = false;
   makeDecorations();
   makeRain();
   frame = 0;
@@ -331,7 +381,7 @@ function spawnSplash(x, y, n){
   for(let i = 0; i < n; i++){
     particles.push({
       x, y, vx: rand(-3.5,3.5), vy: rand(-7,-1.5),
-      life: rand(18,36), max: 36, r: rand(2,5),
+      life: rand(18,36), max:36, r: rand(2,5),
       color: pick(['#6a7a5a','#8a9a70','#5a6a50','#a0a888','#c8c8b8'])
     });
   }
@@ -340,8 +390,7 @@ function spawnDust(x, y){
   for(let i = 0; i < 5; i++){
     particles.push({
       x: x+rand(-8,8), y, vx: rand(-1.5,1.5), vy: rand(-2.5,-0.3),
-      life: rand(8,16), max:16, r: rand(1,2.5),
-      color: 'rgba(160,155,145,0.5)'
+      life: rand(8,16), max:16, r: rand(1,2.5), color: 'rgba(160,155,145,0.5)'
     });
   }
 }
@@ -350,75 +399,103 @@ function spawnSpark(x, y){
     const a = Math.random()*Math.PI*2;
     particles.push({
       x, y, vx: Math.cos(a)*rand(0.8,3), vy: Math.sin(a)*rand(0.8,3),
-      life: rand(12,24), max:24, r: rand(1.5,3),
-      color: '#c8b890'
+      life: rand(12,24), max:24, r: rand(1.5,3), color: '#c8b890'
     });
   }
 }
 
+function tryJump(){
+  const canJump = player.onGround || player.coyote > 0;
+  if(!canJump) return false;
+  // Full upward impulse — no gravity same frame
+  player.vy = JUMP_V;
+  player.onGround = false;
+  player.coyote = 0;
+  player.jumpHoldFrames = JUMP_HOLD_MAX_FRAMES;
+  player.stretch = 1.2;
+  player.squish = 0.82;
+  jumpBuffer = 0;
+  input.jumpPressed = false;
+  sfxJump();
+  return true;
+}
+
 function updatePlayer(){
-  const left = keys['ArrowLeft'] || keys['KeyA'] || touch.left;
-  const right = keys['ArrowRight'] || keys['KeyD'] || touch.right;
-  const jumpKey = keys['Space'] || keys['ArrowUp'] || keys['KeyW'] || touch.jump;
+  const left = input.left;
+  const right = input.right;
 
   if(left){ player.vx -= MOVE_ACC; player.facing = -1; }
   if(right){ player.vx += MOVE_ACC; player.facing = 1; }
-  if(!left && !right) player.vx *= FRICTION;
+  if(!left && !right) player.vx *= (player.onGround ? FRICTION_G : FRICTION_A);
   player.vx = Math.max(-MOVE_MAX, Math.min(MOVE_MAX, player.vx));
 
-  if(jumpBuf > 0) jumpBuf--;
-  if(jumpBuf > 0 && (player.onGround || player.coyote > 0)){
-    player.vy = JUMP_V;
-    player.onGround = false;
-    player.coyote = 0;
-    player.jumpHeld = true;
-    player.stretch = 1.18;
-    player.squish = 0.85;
-    jumpBuf = 0;
-    sfxJump();
-  }
-  /* Modest hold-to-jump — slightly farther, not crazy */
-  if(player.jumpHeld && jumpKey && player.vy < -1){
-    player.vy += JUMP_HOLD;
-  }
-  if(!jumpKey) player.jumpHeld = false;
+  // Jump buffer countdown
+  if(jumpBuffer > 0) jumpBuffer--;
 
+  // Jump: buffer OR fresh press, while grounded/coyote
+  if((jumpBuffer > 0 || input.jumpPressed) && (player.onGround || player.coyote > 0)){
+    tryJump();
+  }
+  input.jumpPressed = false;
+
+  // Variable jump: hold adds a bit more height; release just stops the bonus (no harsh cut)
+  if(player.jumpHoldFrames > 0 && input.jumpHeld && player.vy < 0){
+    player.vy += JUMP_HOLD_FORCE;
+    player.jumpHoldFrames--;
+  } else if(!input.jumpHeld){
+    player.jumpHoldFrames = 0;
+  }
+
+  // Gravity after jump impulse (tryJump sets full JUMP_V first)
   player.vy += GRAVITY;
-  if(player.vy > 16) player.vy = 16;
+  if(player.vy > 17) player.vy = 17;
 
+  // Integrate X
   player.x += player.vx;
-  if(player.x < 12){ player.x = 12; player.vx = 0; }
-  if(player.x > WORLD_W - 12){ player.x = WORLD_W - 12; player.vx = 0; }
+  if(player.x < 14){ player.x = 14; player.vx = 0; }
+  if(player.x > WORLD_W - 14){ player.x = WORLD_W - 14; player.vx = 0; }
 
+  // Integrate Y + land on platforms
+  const prevFeet = player.y + player.h/2;
   player.y += player.vy;
   const wasGround = player.onGround;
   player.onGround = false;
 
-  for(const p of platforms){
-    if(player.vy >= 0 &&
-       player.x + player.w/2 > p.x + 3 &&
-       player.x - player.w/2 < p.x + p.w - 3 &&
-       player.y + player.h/2 > p.y &&
-       player.y + player.h/2 < p.y + p.h + player.vy + 6 &&
-       player.y - player.h/2 < p.y){
-      player.y = p.y - player.h/2;
-      if(!wasGround && player.vy > 2){ spawnDust(player.x, p.y); sfxLand(); }
-      player.vy = 0;
-      player.onGround = true;
-      player.coyote = COYOTE;
-      player.squish = 1.15;
-      player.stretch = 0.88;
-      if(p.checkpoint && p.y < checkpointY - 8){
-        checkpointY = p.y;
-        sfxCheckpoint();
-        spawnSpark(p.x + p.w/2, p.y);
-      } else if(p.checkpoint && checkpointY === 0 && p.y < 0){
-        checkpointY = p.y;
+  if(player.vy >= 0){
+    for(const p of platforms){
+      const feet = player.y + player.h/2;
+      const leftP = player.x - player.w/2;
+      const rightP = player.x + player.w/2;
+      if(rightP > p.x + 2 && leftP < p.x + p.w - 2 &&
+         prevFeet <= p.y + 4 &&
+         feet >= p.y &&
+         feet <= p.y + p.h + Math.max(player.vy, 0) + 4){
+        player.y = p.y - player.h/2;
+        if(!wasGround && player.vy > 2.5){ spawnDust(player.x, p.y); sfxLand(); }
+        player.vy = 0;
+        player.onGround = true;
+        player.coyote = COYOTE_MAX;
+        player.squish = 1.12;
+        player.stretch = 0.9;
+        // Buffered jump on landing
+        if(jumpBuffer > 0) tryJump();
+        if(p.checkpoint && p.y < checkpointY - 8){
+          checkpointY = p.y;
+          sfxCheckpoint();
+          spawnSpark(p.x + p.w/2, p.y);
+        } else if(p.checkpoint && checkpointY === 0 && p.y <= 0){
+          checkpointY = p.y;
+        }
+        break;
       }
     }
   }
 
-  if(!player.onGround && player.coyote > 0) player.coyote--;
+  if(player.onGround){
+    player.coyote = COYOTE_MAX;
+  } else if(player.coyote > 0){
+    player.coyote--;
+  }
 
   player.anim += Math.abs(player.vx) * 0.14 + 0.04;
   player.squish += (1 - player.squish) * 0.18;
@@ -452,7 +529,7 @@ function die(){
 function updateWater(){
   const boost = 1 + scoreHeight / 900;
   waterY -= waterSpeed * boost;
-  if(waterY > player.y + 380) waterY -= 0.25 * boost;
+  if(waterY > player.y + 400) waterY -= 0.22 * boost;
 }
 
 function updateParticles(){
@@ -462,11 +539,9 @@ function updateParticles(){
     if(p.life <= 0) particles.splice(i,1);
   }
 }
-
 function updateRain(){
   for(const r of rain){
-    r.y += r.spd;
-    r.x -= 0.8;
+    r.y += r.spd; r.x -= 0.7;
     if(r.y > H){ r.y = -10; r.x = Math.random()*W; }
     if(r.x < 0) r.x += W;
   }
@@ -475,10 +550,9 @@ function updateRain(){
     if(m.x > W + 100) m.x = -m.w;
   }
 }
-
 function updateCamera(){
   const target = player.y - H * 0.55;
-  cameraY += (target - cameraY) * 0.09;
+  cameraY += (target - cameraY) * 0.1;
   if(cameraY > waterY - H * 0.28) cameraY = waterY - H * 0.28;
 }
 
@@ -489,52 +563,77 @@ function wx(x){
   return x + offset - follow;
 }
 
+/* ── Draw: soft 2.5D ── */
+function drawBox3D(x, y, w, h, depth, top, side, front){
+  // Side face (right)
+  ctx.fillStyle = side;
+  ctx.beginPath();
+  ctx.moveTo(x + w, y);
+  ctx.lineTo(x + w + depth, y - depth * 0.55);
+  ctx.lineTo(x + w + depth, y + h - depth * 0.55);
+  ctx.lineTo(x + w, y + h);
+  ctx.closePath();
+  ctx.fill();
+  // Top face
+  ctx.fillStyle = top;
+  ctx.beginPath();
+  ctx.moveTo(x, y);
+  ctx.lineTo(x + depth, y - depth * 0.55);
+  ctx.lineTo(x + w + depth, y - depth * 0.55);
+  ctx.lineTo(x + w, y);
+  ctx.closePath();
+  ctx.fill();
+  // Front face
+  ctx.fillStyle = front;
+  ctx.fillRect(x, y, w, h);
+  // Soft highlight on top edge of front
+  ctx.fillStyle = 'rgba(255,255,255,0.1)';
+  ctx.fillRect(x, y, w, 2);
+  // Soft contact shadow
+  ctx.fillStyle = 'rgba(30,35,40,0.16)';
+  ctx.fillRect(x + 2, y + h, w - 1, 4);
+}
+
 function drawBg(){
-  /* Overcast Bangkok sky — soft grey-blue */
   const g = ctx.createLinearGradient(0, 0, 0, H);
   g.addColorStop(0, '#7a8792');
-  g.addColorStop(0.35, '#8a949c');
-  g.addColorStop(0.7, '#9aa4a8');
+  g.addColorStop(0.4, '#8c969e');
+  g.addColorStop(0.75, '#9aa4a6');
   g.addColorStop(1, '#8a9488');
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, W, H);
 
-  /* Soft sun disc behind clouds */
   ctx.beginPath();
-  ctx.arc(W * 0.72, H * 0.18, 36, 0, Math.PI*2);
-  ctx.fillStyle = 'rgba(220,210,180,0.35)';
+  ctx.arc(W * 0.74, H * 0.16, 34, 0, Math.PI*2);
+  ctx.fillStyle = 'rgba(220,210,180,0.28)';
   ctx.fill();
   ctx.beginPath();
-  ctx.arc(W * 0.72, H * 0.18, 55, 0, Math.PI*2);
-  ctx.fillStyle = 'rgba(200,195,175,0.12)';
+  ctx.arc(W * 0.74, H * 0.16, 58, 0, Math.PI*2);
+  ctx.fillStyle = 'rgba(200,195,175,0.1)';
   ctx.fill();
 
-  /* Soft cloud bands */
-  for(let i = 0; i < 6; i++){
-    const cx = ((i * 180 + frame * 0.08) % (W + 200)) - 100;
-    const cy = 40 + i * 28;
-    ctx.fillStyle = `rgba(200,205,210,${0.12 + (i%3)*0.03})`;
+  for(let i = 0; i < 5; i++){
+    const cx = ((i * 190 + frame * 0.07) % (W + 220)) - 110;
+    const cy = 36 + i * 26;
+    ctx.fillStyle = `rgba(200,205,210,${0.1 + (i%3)*0.025})`;
     ctx.beginPath();
-    ctx.ellipse(cx, cy, 90 + i*10, 22, 0, 0, Math.PI*2);
-    ctx.ellipse(cx + 50, cy + 6, 70, 18, 0, 0, Math.PI*2);
+    ctx.ellipse(cx, cy, 95 + i*8, 20, 0, 0, Math.PI*2);
+    ctx.ellipse(cx + 48, cy + 5, 68, 16, 0, 0, Math.PI*2);
     ctx.fill();
   }
 
-  /* Distant concrete city */
+  // Parallax buildings with 2.5D
   for(const d of decorations){
-    const sx = wx(d.x) * 0.45 + W * 0.28;
-    const sy = wy(d.y) * 0.28 + H * 0.48;
-    if(sy > H + 60 || sy + d.h < -40) continue;
+    const sx = wx(d.x) * 0.42 + W * 0.3;
+    const sy = wy(d.y) * 0.26 + H * 0.5;
+    if(sy > H + 80 || sy + d.h < -50) continue;
     ctx.globalAlpha = d.shade;
-    ctx.fillStyle = d.tone;
-    ctx.fillRect(sx, sy, d.w, d.h);
-    /* Soft top edge */
-    ctx.fillStyle = 'rgba(255,255,255,0.08)';
-    ctx.fillRect(sx, sy, d.w, 3);
+    const dep = 10;
+    drawBox3D(sx, sy, d.w, d.h, dep, d.top, d.side, d.front);
     if(d.windows){
-      ctx.fillStyle = 'rgba(180,175,150,0.15)';
-      for(let row = 10; row < d.h - 10; row += 16){
-        for(let col = 8; col < d.w - 8; col += 14){
+      ctx.fillStyle = 'rgba(195,188,160,0.18)';
+      for(let row = 12; row < d.h - 12; row += 16){
+        for(let col = 8; col < d.w - 8; col += 13){
           if(((col + row + Math.floor(d.x)) % 5) === 0) continue;
           ctx.fillRect(sx + col, sy + row, 5, 7);
         }
@@ -549,33 +648,21 @@ function drawLandmark(lm){
   const sy = wy(lm.baseY);
   if(sy > H + 100 || sy < -420) return;
   ctx.save();
-  ctx.globalAlpha = 0.55;
+  ctx.globalAlpha = 0.58;
   if(lm.kind === 'wat'){
-    ctx.fillStyle = '#8a7a60';
-    ctx.beginPath();
-    ctx.moveTo(sx, sy - 110);
-    ctx.lineTo(sx - 28, sy);
-    ctx.lineTo(sx + 28, sy);
-    ctx.closePath();
-    ctx.fill();
+    drawBox3D(sx - 18, sy - 40, 36, 40, 8, '#a09070', '#6a5c48', '#8a7a60');
     ctx.fillStyle = '#9a8a68';
     ctx.beginPath();
-    ctx.moveTo(sx, sy - 145);
-    ctx.lineTo(sx - 10, sy - 95);
-    ctx.lineTo(sx + 10, sy - 95);
+    ctx.moveTo(sx, sy - 150);
+    ctx.lineTo(sx - 22, sy - 40);
+    ctx.lineTo(sx + 22, sy - 40);
     ctx.closePath();
     ctx.fill();
   } else if(lm.kind === 'bts'){
-    ctx.fillStyle = '#7a8088';
-    ctx.fillRect(sx - 7, sy - 190, 14, 190);
-    ctx.fillRect(sx - 55, sy - 200, 110, 12);
-    ctx.fillStyle = '#5a6068';
-    ctx.fillRect(sx - 50, sy - 196, 100, 3);
+    drawBox3D(sx - 8, sy - 190, 16, 190, 8, '#a0a4a8', '#606870', '#7a8088');
+    drawBox3D(sx - 56, sy - 202, 112, 14, 8, '#989ca0', '#5c6268', '#707880');
   } else if(lm.kind === 'tower'){
-    ctx.fillStyle = '#6a7078';
-    ctx.fillRect(sx - 12, sy - 230, 24, 230);
-    ctx.fillStyle = '#8a8580';
-    ctx.fillRect(sx - 8, sy - 240, 16, 10);
+    drawBox3D(sx - 12, sy - 230, 24, 230, 9, '#8a9098', '#505860', '#6a7078');
   }
   ctx.restore();
 }
@@ -583,55 +670,43 @@ function drawLandmark(lm){
 function drawPlatform(p){
   const sx = wx(p.x);
   const sy = wy(p.y);
-  if(sy > H + 50 || sy < -70) return;
+  if(sy > H + 60 || sy < -80) return;
   const bob = p.type === 'boat' ? Math.sin(frame*0.035 + p.bob)*1.5 : 0;
   const y = sy + bob;
-
-  ctx.save();
-  /* Soft shadow under platform */
-  ctx.fillStyle = 'rgba(40,45,50,0.18)';
-  ctx.fillRect(sx + 3, y + p.h, p.w - 2, 5);
+  const d = p.depth;
 
   if(p.type === 'tuktuk'){
-    ctx.fillStyle = p.color;
-    ctx.beginPath();
-    ctx.moveTo(sx + 4, y);
-    ctx.lineTo(sx + p.w - 4, y);
-    ctx.lineTo(sx + p.w - 10, y + p.h);
-    ctx.lineTo(sx + 10, y + p.h);
-    ctx.closePath();
-    ctx.fill();
-    ctx.fillStyle = p.accent;
-    ctx.fillRect(sx + 12, y + 2, p.w - 24, 3);
+    drawBox3D(sx, y, p.w, p.h, d, p.top, p.side, p.front);
     ctx.strokeStyle = 'rgba(80,70,50,0.35)';
     ctx.lineWidth = 1.5;
     ctx.strokeRect(sx + 6, y - 5, p.w - 12, 5);
+    ctx.fillStyle = 'rgba(255,255,255,0.12)';
+    ctx.fillRect(sx + 14, y + 3, p.w - 28, 3);
   } else if(p.type === 'pillar'){
-    ctx.fillStyle = p.color;
-    ctx.fillRect(sx, y, p.w, p.h);
-    ctx.fillStyle = p.accent;
-    ctx.fillRect(sx - 6, y - 3, p.w + 12, 5);
-    ctx.fillStyle = 'rgba(0,0,0,0.08)';
-    ctx.fillRect(sx + 3, y + 5, p.w - 6, 2);
-    ctx.fillRect(sx + 3, y + 10, p.w - 6, 2);
+    drawBox3D(sx, y, p.w, p.h, d + 2, p.top, p.side, p.front);
+    drawBox3D(sx - 8, y - 4, p.w + 16, 6, d, '#c0c4c8', '#7a8086', '#a8acb0');
   } else if(p.type === 'sign' || p.type === 'billboard'){
-    ctx.fillStyle = '#6a6e72';
-    ctx.fillRect(sx + p.w/2 - 3, y + p.h, 6, 18);
-    ctx.fillStyle = p.color;
-    ctx.fillRect(sx, y - 16, p.w, 16 + p.h);
-    ctx.strokeStyle = 'rgba(50,55,60,0.4)';
-    ctx.lineWidth = 2;
-    ctx.strokeRect(sx, y - 16, p.w, 16 + p.h);
+    // Pole (2.5D)
+    drawBox3D(sx + p.w/2 - 3, y + p.h, 6, 18, 5, '#8a8e92', '#555a60', '#6a6e72');
+    drawBox3D(sx, y - 16, p.w, 16 + p.h, d, p.top, p.side, p.front);
     if(p.label){
-      ctx.fillStyle = 'rgba(220,210,180,0.55)';
+      ctx.fillStyle = 'rgba(230,220,195,0.55)';
       ctx.font = `bold ${p.type==='billboard'?12:10}px sans-serif`;
       ctx.textAlign = 'center';
-      ctx.fillText(p.label, sx + p.w/2, y - 3);
+      ctx.fillText(p.label, sx + p.w/2, y - 2);
     }
-    ctx.fillStyle = p.accent;
+    ctx.fillStyle = 'rgba(255,255,255,0.15)';
     ctx.fillRect(sx, y, p.w, 3);
   } else if(p.type === 'awning'){
-    ctx.fillStyle = p.color;
+    ctx.fillStyle = p.side;
+    ctx.beginPath();
+    ctx.moveTo(sx, y + p.h);
+    ctx.quadraticCurveTo(sx + p.w/2, y - 6, sx + p.w, y + p.h);
+    ctx.lineTo(sx + p.w + d*0.5, y + p.h - d*0.3);
+    ctx.quadraticCurveTo(sx + p.w/2 + d*0.3, y - 10, sx + d*0.4, y + p.h - d*0.3);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = p.front;
     ctx.beginPath();
     ctx.moveTo(sx, y + p.h);
     ctx.quadraticCurveTo(sx + p.w/2, y - 6, sx + p.w, y + p.h);
@@ -639,10 +714,17 @@ function drawPlatform(p){
     ctx.quadraticCurveTo(sx + p.w/2, y - 2, sx, y + p.h + 3);
     ctx.closePath();
     ctx.fill();
-    ctx.fillStyle = p.accent;
-    ctx.fillRect(sx, y, p.w, 3);
+    drawBox3D(sx, y, p.w, 4, d, p.top, p.side, p.front);
   } else if(p.type === 'boat'){
-    ctx.fillStyle = p.color;
+    ctx.fillStyle = p.side;
+    ctx.beginPath();
+    ctx.moveTo(sx + 8, y);
+    ctx.lineTo(sx + p.w - 8, y);
+    ctx.lineTo(sx + p.w + d*0.4, y - d*0.25);
+    ctx.lineTo(sx + 8 + d*0.4, y - d*0.25);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = p.front;
     ctx.beginPath();
     ctx.moveTo(sx + 8, y);
     ctx.lineTo(sx + p.w - 8, y);
@@ -650,30 +732,20 @@ function drawPlatform(p){
     ctx.lineTo(sx, y + p.h);
     ctx.closePath();
     ctx.fill();
-    ctx.fillStyle = p.accent;
+    ctx.fillStyle = p.top;
     ctx.fillRect(sx + 18, y - 8, 6, 8);
   } else if(p.type === 'crane'){
-    ctx.fillStyle = p.color;
-    ctx.fillRect(sx, y, p.w, p.h);
-    ctx.fillStyle = p.accent;
-    ctx.fillRect(sx, y - 2, p.w, 3);
-    ctx.fillRect(sx + p.w - 5, y - 26, 3, 26);
+    drawBox3D(sx, y, p.w, p.h, d, p.top, p.side, p.front);
+    drawBox3D(sx + p.w - 5, y - 26, 4, 26, 5, p.top, p.side, p.front);
   } else {
-    /* Rooftop — concrete with tile edge */
-    ctx.fillStyle = p.color;
-    ctx.fillRect(sx, y, p.w, p.h);
-    ctx.fillStyle = p.roof || p.accent;
-    ctx.fillRect(sx - 2, y, p.w + 4, 5);
-    /* Weather stains */
-    ctx.fillStyle = `rgba(60,70,55,${0.08 + p.stain*0.08})`;
-    ctx.fillRect(sx + p.w*0.2, y + 5, p.w*0.25, p.h - 5);
-    ctx.fillStyle = 'rgba(0,0,0,0.06)';
-    for(let tx = 0; tx < p.w; tx += 14) ctx.fillRect(sx + tx, y + 5, 1, p.h - 5);
-    if(p.w > 140){
-      ctx.fillStyle = '#7a8086';
-      ctx.fillRect(sx + p.w - 28, y - 12, 20, 12);
-      ctx.fillStyle = '#5a6066';
-      ctx.fillRect(sx + p.w - 26, y - 10, 7, 7);
+    // Rooftop
+    drawBox3D(sx, y, p.w, p.h, d, p.top, p.side, p.front);
+    ctx.fillStyle = '#7a6060';
+    ctx.fillRect(sx - 1, y, p.w + 2, 4);
+    ctx.fillStyle = `rgba(60,70,55,${0.07 + p.stain*0.07})`;
+    ctx.fillRect(sx + p.w*0.2, y + 5, p.w*0.28, p.h - 5);
+    if(p.w > 145){
+      drawBox3D(sx + p.w - 28, y - 12, 20, 12, 7, '#9aa0a6', '#5a6066', '#7a8086');
     }
   }
 
@@ -693,7 +765,6 @@ function drawPlatform(p){
     ctx.closePath();
     ctx.fill();
   }
-  ctx.restore();
 }
 
 function drawPlayer(){
@@ -706,17 +777,23 @@ function drawPlayer(){
   ctx.save();
   ctx.translate(sx, sy);
 
-  ctx.fillStyle = 'rgba(40,45,50,0.2)';
+  // Soft ground shadow
+  ctx.fillStyle = 'rgba(35,40,45,0.22)';
   ctx.beginPath();
-  ctx.ellipse(0, ph/2 + 2, pw*0.4, 3.5, 0, 0, Math.PI*2);
+  ctx.ellipse(3, ph/2 + 3, pw*0.42, 3.5, 0, 0, Math.PI*2);
   ctx.fill();
 
   const legSwing = player.onGround ? Math.sin(player.anim) * 5 : 1.5;
-  /* Grounded cartoon palette */
+  // Legs with slight side shade
+  ctx.fillStyle = '#3e4c58';
+  ctx.fillRect(-7*f + 2, ph*0.14, 6, ph*0.34 + (f>0?legSwing:-legSwing)*0.25);
   ctx.fillStyle = '#4a5a68';
   ctx.fillRect(-7*f, ph*0.14, 6, ph*0.34 + (f>0?legSwing:-legSwing)*0.25);
   ctx.fillRect(1*f, ph*0.14, 6, ph*0.34 + (f>0?-legSwing:legSwing)*0.25);
 
+  // Torso 2.5D-ish
+  ctx.fillStyle = '#5a6a54';
+  ctx.fillRect(-pw*0.32 + 3, -ph*0.24, pw*0.64, ph*0.48);
   ctx.fillStyle = '#6a7a62';
   ctx.beginPath();
   roundRect(-pw*0.32, -ph*0.24, pw*0.64, ph*0.48, 5);
@@ -724,6 +801,10 @@ function drawPlayer(){
   ctx.fillStyle = '#8a9a78';
   ctx.fillRect(-pw*0.32, -ph*0.04, pw*0.64, 3);
 
+  ctx.fillStyle = '#c4a882';
+  ctx.beginPath();
+  ctx.arc(2, -ph*0.36, pw*0.3, 0, Math.PI*2);
+  ctx.fill();
   ctx.fillStyle = '#d4b896';
   ctx.beginPath();
   ctx.arc(0, -ph*0.36, pw*0.3, 0, Math.PI*2);
@@ -739,7 +820,7 @@ function drawPlayer(){
   ctx.arc(f * 3.5, -ph*0.36, 2.2, 0, Math.PI*2);
   ctx.arc(f * -2.5, -ph*0.36, 2, 0, Math.PI*2);
   ctx.fill();
-  ctx.fillStyle = 'rgba(255,255,255,0.5)';
+  ctx.fillStyle = 'rgba(255,255,255,0.45)';
   ctx.beginPath();
   ctx.arc(f * 4, -ph*0.38, 0.8, 0, Math.PI*2);
   ctx.fill();
@@ -770,59 +851,38 @@ function roundRect(x,y,w,h,r){
 function drawWater(){
   const sy = wy(waterY);
   if(sy > H + 20) return;
-
-  /* Muddy green-brown flood */
   const g = ctx.createLinearGradient(0, Math.max(0, sy - 10), 0, H);
-  g.addColorStop(0, 'rgba(110,120,85,0.55)');
+  g.addColorStop(0, 'rgba(110,120,85,0.52)');
   g.addColorStop(0.15, 'rgba(90,100,70,0.72)');
-  g.addColorStop(0.5, 'rgba(70,80,58,0.85)');
-  g.addColorStop(1, 'rgba(50,58,45,0.92)');
+  g.addColorStop(0.5, 'rgba(70,80,58,0.86)');
+  g.addColorStop(1, 'rgba(50,58,45,0.93)');
   ctx.fillStyle = g;
   ctx.fillRect(0, Math.max(0, sy - 8), W, H - sy + 60);
 
-  /* Soft foam / surface */
   ctx.beginPath();
   ctx.moveTo(0, sy);
   for(let x = 0; x <= W; x += 8){
-    const wave = Math.sin(x * 0.025 + frame * 0.05) * 4
-               + Math.sin(x * 0.055 + frame * 0.03) * 2.5;
+    const wave = Math.sin(x * 0.025 + frame * 0.05) * 4 + Math.sin(x * 0.055 + frame * 0.03) * 2.5;
     ctx.lineTo(x, sy + wave);
   }
-  ctx.lineTo(W, H + 20);
-  ctx.lineTo(0, H + 20);
-  ctx.closePath();
-  ctx.fillStyle = 'rgba(140,150,110,0.22)';
+  ctx.lineTo(W, H + 20); ctx.lineTo(0, H + 20); ctx.closePath();
+  ctx.fillStyle = 'rgba(140,150,110,0.2)';
   ctx.fill();
 
-  /* Gentle wave crest — soft, not neon */
-  ctx.strokeStyle = 'rgba(180,185,155,0.45)';
+  ctx.strokeStyle = 'rgba(180,185,155,0.42)';
   ctx.lineWidth = 2;
   ctx.beginPath();
   for(let x = 0; x <= W; x += 6){
-    const wave = Math.sin(x * 0.025 + frame * 0.05) * 4
-               + Math.sin(x * 0.055 + frame * 0.03) * 2.5;
-    if(x===0) ctx.moveTo(x, sy + wave);
-    else ctx.lineTo(x, sy + wave);
+    const wave = Math.sin(x * 0.025 + frame * 0.05) * 4 + Math.sin(x * 0.055 + frame * 0.03) * 2.5;
+    if(x===0) ctx.moveTo(x, sy + wave); else ctx.lineTo(x, sy + wave);
   }
   ctx.stroke();
 
-  /* Secondary soft ripple */
-  ctx.strokeStyle = 'rgba(160,165,140,0.2)';
-  ctx.lineWidth = 1.5;
-  ctx.beginPath();
-  for(let x = 0; x <= W; x += 8){
-    const wave = Math.sin(x * 0.03 + frame * 0.04 + 1) * 3;
-    if(x===0) ctx.moveTo(x, sy + 8 + wave);
-    else ctx.lineTo(x, sy + 8 + wave);
-  }
-  ctx.stroke();
-
-  /* Floating debris — muted */
   for(let i = 0; i < 7; i++){
     const dx = ((i * 171 + frame * 0.3) % (W + 50)) - 25;
     const dy = sy + 16 + Math.sin(frame*0.025 + i)*6 + i*10;
     if(dy > H) continue;
-    ctx.globalAlpha = 0.4;
+    ctx.globalAlpha = 0.38;
     ctx.fillStyle = i%3===0 ? '#6a6860' : (i%3===1 ? '#7a6050' : '#5a6558');
     ctx.fillRect(dx, dy, 14 + i%4, 4);
     ctx.globalAlpha = 1;
@@ -830,7 +890,6 @@ function drawWater(){
 }
 
 function drawFog(){
-  /* Soft fog bands near water / mid */
   for(const m of mist){
     const gy = ctx.createRadialGradient(m.x, m.y, 0, m.x, m.y, m.w*0.5);
     gy.addColorStop(0, `rgba(190,195,190,${m.a})`);
@@ -840,10 +899,9 @@ function drawFog(){
     ctx.ellipse(m.x, m.y, m.w*0.5, m.h*0.5, 0, 0, Math.PI*2);
     ctx.fill();
   }
-  /* Vignette / soft edge fog at bottom */
   const vg = ctx.createLinearGradient(0, H*0.55, 0, H);
   vg.addColorStop(0, 'rgba(140,148,140,0)');
-  vg.addColorStop(1, 'rgba(120,130,115,0.18)');
+  vg.addColorStop(1, 'rgba(120,130,115,0.16)');
   ctx.fillStyle = vg;
   ctx.fillRect(0, H*0.55, W, H*0.45);
 }
@@ -886,23 +944,17 @@ function drawTitleBg(){
     if(x===0) ctx.moveTo(x, sy+wave); else ctx.lineTo(x, sy+wave);
   }
   ctx.stroke();
-  drawFog();
-  drawRain();
+  drawFog(); drawRain();
   if(!platforms || !platforms.length){
     generateInitialPlatforms();
-    player = makePlayer(WORLD_W/2, -40);
+    player = makePlayer(WORLD_W/2, -player.h/2);
+    player.onGround = true;
     cameraY = -H * 0.28;
     waterY = 190;
-    makeDecorations();
-    makeRain();
-    particles = [];
+    makeDecorations(); makeRain(); particles = [];
   }
   for(const p of platforms.slice(0, 14)) drawPlatform(p);
   if(player) drawPlayer();
-}
-
-function drawHUD(){
-  document.getElementById('heightVal').textContent = scoreHeight + ' m';
 }
 
 function loop(){
@@ -918,7 +970,6 @@ function loop(){
     updateParticles();
     updateCamera();
     extendPlatforms();
-
     drawBg();
     for(const lm of landmarks) drawLandmark(lm);
     for(const p of platforms) drawPlatform(p);
@@ -927,7 +978,7 @@ function loop(){
     drawWater();
     drawFog();
     drawRain();
-    drawHUD();
+    document.getElementById('heightVal').textContent = scoreHeight + ' m';
   } else if(state === STATE.DEAD){
     updateParticles();
     updateCamera();
@@ -938,7 +989,6 @@ function loop(){
     drawFog();
     drawRain();
   }
-
   requestAnimationFrame(loop);
 }
 
@@ -980,7 +1030,8 @@ document.getElementById('muteBtn').addEventListener('click', () => {
 });
 
 generateInitialPlatforms();
-player = makePlayer(WORLD_W/2, -40);
+player = makePlayer(WORLD_W/2, -19);
+player.onGround = true;
 cameraY = -H * 0.28;
 waterY = 190;
 makeDecorations();
@@ -988,6 +1039,19 @@ makeRain();
 particles = [];
 frame = 0;
 loop();
+
+/* Expose tiny self-check for verification */
+window.__bfcJumpTest = function(){
+  const G = GRAVITY, J = JUMP_V, Hld = JUMP_HOLD_FORCE;
+  let y = 0, vy = J, hold = JUMP_HOLD_MAX_FRAMES, peak = 0, f = 0;
+  while(f < 80){
+    if(hold > 0 && vy < 0){ vy += Hld; hold--; }
+    vy += G; y += vy; f++;
+    if(y < peak) peak = y;
+    if(y >= 0 && vy > 0) break;
+  }
+  return { peakPx: Math.round(-peak), airFrames: f, jumpV: J, gravity: G };
+};
 })();
 </script>
 </body>
