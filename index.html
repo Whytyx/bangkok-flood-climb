@@ -100,7 +100,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#7a8790;font-family:
     <div class="mc-zone" id="mcRight" role="button" aria-label="Right">▶</div>
     <div class="mc-zone" id="mcJump" role="button" aria-label="Jump">⬆</div>
   </div>
-  <div id="watermark">BANGKOK FLOOD CLIMB V1.6.4</div>
+  <div id="watermark">BANGKOK FLOOD CLIMB V1.6.5</div>
 </div>
 <script>
 (function(){
@@ -470,8 +470,11 @@ const PLATFORM_TYPES=[
   {name:'awning',w:[78,118],h:12,top:'#a07060',side:'#6a4840',front:'#8b5a4a'},
   {name:'boat',w:[95,125],h:14,top:'#7a8a90',side:'#4a5a62',front:'#5a6a72'},
   {name:'crane',w:[58,90],h:14,top:'#c9a050',side:'#7a6028',front:'#b08940'},
+  // Climbable BTS skytrain station deck (visual pillars hang below; collision = deck only)
+  {name:'bts',w:[140,200],h:16,top:'#c8d8dc',side:'#4a6a72',front:'#6a9aa4'},
 ];
-const SIGN_TEXTS=['7-11','7-11','BTS','BTS','PAD THAI','ตลาด','ก๋วยเตี๋ยว','SIAM','TOM YUM','SOMBAT','7-11','BTS'];
+const BTS_TYPE = PLATFORM_TYPES[PLATFORM_TYPES.length-1];
+const SIGN_TEXTS=['7-11','7-11','7-11','PAD THAI','ตลาด','ก๋วยเตี๋ยว','SIAM','TOM YUM','SOMBAT','PAD THAI'];
 
 function rand(a,b){return a+Math.random()*(b-a);}
 function randi(a,b){return Math.floor(rand(a,b+1));}
@@ -486,13 +489,13 @@ function assignHazards(p, index, heightApprox){
   const hf = Math.min(1, Math.max(0, -p.y/2500));
   // Slippery wet roofs — common on rooftops/awnings
   p.slippery = (p.type==='rooftop'||p.type==='awning') && Math.random() < 0.28+hf*0.2;
-  // Swaying / moving platforms
+  // Swaying / moving platforms (never for solid BTS stations)
   p.sway = false; p.move = false;
-  if(index>4 && Math.random()<0.18+hf*0.15){
+  if(p.type!=='bts' && index>4 && Math.random()<0.18+hf*0.15){
     if(Math.random()<0.55){ p.sway=true; p.swayAmp=rand(10,28); p.swaySpd=rand(0.02,0.045); p.swayPhase=Math.random()*Math.PI*2; p.baseX=p.x; }
     else { p.move=true; p.moveAmp=rand(28,55); p.moveSpd=rand(0.015,0.035); p.movePhase=Math.random()*Math.PI*2; p.baseX=p.x; }
   }
-  // Collapsing signs/billboards after brief stand
+  // Collapsing signs/billboards after brief stand (not BTS stations)
   p.collapse = (p.type==='sign'||p.type==='billboard') && index>6 && Math.random()<0.35+hf*0.2;
   p.collapseTimer=0; p.collapseMax=rand(45,75); // frames standing before fall
   p.falling=false; p.fallVy=0; p.gone=false;
@@ -511,6 +514,10 @@ function assignHazards(p, index, heightApprox){
     p.props.push({k:'crate', ox:rand(0.2,0.6)});
   } else if(p.type==='tuktuk'){
     p.props.push({k:'tuktukdetail', ox:0.5});
+  } else if(p.type==='bts'){
+    p.label='BTS';
+    p.slippery=false; p.collapse=false;
+    p.props.push({k:'btstrain', ox:0.5});
   }
   return p;
 }
@@ -519,14 +526,16 @@ function makePlatform(x,y,type,index){
   const t=type||pick(PLATFORM_TYPES);
   let w=rand(t.w[0],t.w[1]);
   let label=null;
-  if(t.name==='sign'||t.name==='billboard'){
+  if(t.name==='bts'){
+    w=rand(150,200);
+    label='BTS';
+  } else if(t.name==='sign'||t.name==='billboard'){
     label=pick(SIGN_TEXTS);
-    // Wider walkable fascia so 7-Eleven / BTS read clearly
     if(label==='7-11') w=Math.max(w, t.name==='billboard'?150:110);
-    if(label==='BTS') w=Math.max(w, t.name==='billboard'?160:120);
   }
   const p={ x:x-w/2,y,w,h:t.h,type:t.name, top:t.top,side:t.side,front:t.front,
-    label, checkpoint:false, depth:DEPTH+(t.name==='pillar'?4:0) };
+    label, checkpoint:false, depth:DEPTH+(t.name==='pillar'?4:0)+(t.name==='bts'?2:0) };
+  p.baseX=p.x;
   return assignHazards(p, index||0, -y);
 }
 
@@ -552,7 +561,9 @@ function generateInitialPlatforms(){
     if(i>12 && Math.random()<0.07+hf*0.06) dx=(Math.random()<0.5?-1:1)*rand(100, 120+hf*30);
     let nx=prevX+dx;
     if(Math.abs(nx-climbCenterX)>WORLD_MARGIN) nx=prevX-dx*0.5;
-    const p=makePlatform(nx,y,null,i+1);
+    // Every ~7 platforms: solid climbable BTS station (looks like the teal skytrain)
+    const forceBts = (i>3 && i%7===0);
+    const p=makePlatform(nx,y, forceBts?BTS_TYPE:null, i+1);
     if(i>0 && i%8===0){ p.checkpoint=true; p.collapse=false; p.slippery=false; }
     platforms.push(p);
     // Occasional wires between platforms
@@ -575,7 +586,8 @@ function extendPlatforms(){
     if(Math.random()<0.08+hf*0.05) dx=(Math.random()<0.5?-1:1)*rand(105,130+hf*25);
     let nx=prevX+dx;
     if(Math.abs(nx-player.x)>WORLD_MARGIN) nx=prevX-Math.sign(dx||1)*Math.abs(dx)*0.4;
-    const p=makePlatform(nx,lastPlatY,null,platforms.length);
+    const forceBts = (platforms.length%7===0);
+    const p=makePlatform(nx,lastPlatY, forceBts?BTS_TYPE:null, platforms.length);
     if(platforms.length%8===0){ p.checkpoint=true; p.collapse=false; }
     platforms.push(p);
     if(Math.random()<0.2+hf*0.15){
@@ -606,12 +618,13 @@ function makeDecorations(){
   for(let i=0;i<24;i++) citySil.push({x:i*70-200, h:rand(40,120), w:rand(28,60)});
   landmarks=[
     {kind:'wat',x:-180,baseY:-420},
-    {kind:'bts',x:220,baseY:-960},
     {kind:'seven',x:-90,baseY:-1280},
     {kind:'tower',x:80,baseY:-1720},
-    {kind:'bts',x:-250,baseY:-2100},
+    // Far/faded BTS only — climbable stations are real platforms in the path
+    {kind:'bts',x:320,baseY:-2600, far:true},
     {kind:'wat',x:300,baseY:-2400},
-    {kind:'seven',x:160,baseY:-2900}
+    {kind:'seven',x:160,baseY:-2900},
+    {kind:'bts',x:-380,baseY:-3400, far:true}
   ];
 }
 function makeRain(){
@@ -1335,6 +1348,7 @@ function drawLandmark(lm){
     // tip
     ctx.fillStyle='rgba(220,200,150,0.7)'; ctx.beginPath(); ctx.arc(sx,sy-188,3,0,Math.PI*2); ctx.fill();
   } else if(lm.kind==='bts'){
+    ctx.globalAlpha = lm.far ? 0.28 : 0.35; // clearly background, not climbable
     drawBTSLandmark(sx, sy);
   } else if(lm.kind==='seven'){
     drawSevenLandmark(sx, sy);
@@ -1343,6 +1357,59 @@ function drawLandmark(lm){
     ctx.fillStyle='rgba(180,170,150,0.35)'; ctx.fillRect(sx-8, sy-258, 16, 8);
   }
   ctx.restore();
+}
+
+
+/** Climbable BTS station — deck is the hitbox; pillars/train are visuals below */
+function drawBTSStationPlatform(p, sx, y, d){
+  const w=p.w, h=p.h;
+  // Pillars hanging below deck (decoration only)
+  const pillarW=12, pillarH=56;
+  const leftPx=sx+10, rightPx=sx+w-10-pillarW;
+  drawBox3D(leftPx, y+h, pillarW, pillarH, 6, '#c0d0d4', '#5a7078', '#8aa0a8');
+  drawBox3D(rightPx, y+h, pillarW, pillarH, 6, '#c0d0d4', '#5a7078', '#8aa0a8');
+  // Cross beam under deck
+  ctx.fillStyle='rgba(70,100,108,0.45)';
+  ctx.fillRect(sx+8, y+h+2, w-16, 4);
+
+  // Solid walkable deck (matches collision: top at y)
+  drawBox3D(sx, y, w, h, d, '#d0dce0', '#4a6870', '#7a9aa4');
+  // Teal fascia / canopy sitting on deck front
+  ctx.fillStyle='#3d8a96';
+  ctx.fillRect(sx-2, y-14, w+4, 12);
+  ctx.fillStyle='#5aa0a8';
+  ctx.fillRect(sx-4, y-17, w+8, 4);
+  ctx.fillStyle='rgba(255,255,255,0.22)';
+  ctx.fillRect(sx-4, y-17, w+8, 1.5);
+  // BTS badge
+  const bw=Math.min(44, w*0.28), bh=9;
+  ctx.fillStyle='rgba(255,255,255,0.95)';
+  ctx.fillRect(sx+w/2-bw/2, y-13, bw, bh);
+  ctx.fillStyle='#2a6a74';
+  ctx.font='bold 10px sans-serif';
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText('BTS', sx+w/2, y-13+bh/2);
+  ctx.textBaseline='alphabetic';
+  // Deck edge strip (clear landing surface)
+  ctx.fillStyle='#8eb8c0';
+  ctx.fillRect(sx, y, w, 3);
+  // Optional train car hanging below between pillars (not walkable)
+  if(p.props && p.props.some(pr=>pr.k==='btstrain')){
+    const tx=sx+w*0.2+Math.sin(frame*0.02+p.bob)*6;
+    const ty=y+h+18;
+    ctx.fillStyle='#5a9aa4';
+    roundRectPath(ctx, tx, ty, Math.min(56, w*0.4), 12, 3); ctx.fill();
+    ctx.fillStyle='#3d7a84'; ctx.fillRect(tx+2, ty+2, Math.min(52, w*0.4-4), 3);
+    ctx.fillStyle='rgba(220,235,240,0.5)';
+    for(let i=0;i<4;i++) ctx.fillRect(tx+4+i*12, ty+5, 8, 4);
+  }
+  if(p.checkpoint){
+    const fx=sx+w/2;
+    ctx.strokeStyle='#8a8a82'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(fx,y); ctx.lineTo(fx,y-34); ctx.stroke();
+    ctx.fillStyle='#d4c090';
+    ctx.beginPath(); ctx.moveTo(fx,y-34); ctx.lineTo(fx+18,y-26); ctx.lineTo(fx,y-18); ctx.closePath(); ctx.fill();
+  }
 }
 
 function drawPlatformProps(p, sx, y){
@@ -1395,7 +1462,9 @@ function drawPlatform(p){
   if(p.collapse && !p.falling){ front=shade(p.front,-10); }
   if(p.falling) ctx.globalAlpha=0.75;
 
-  if(p.type==='tuktuk'){
+  if(p.type==='bts'){
+    drawBTSStationPlatform(p, sx, y, d);
+  } else if(p.type==='tuktuk'){
     // body
     ctx.fillStyle=side; ctx.fillRect(sx+4, y-8, p.w-8, 8);
     drawBox3D(sx,y,p.w,p.h,d,top,side,front);
@@ -1466,13 +1535,15 @@ function drawPlatform(p){
       drawBox3D(sx+p.w-30, y-13, 22, 13, 7, '#9aa2a8', '#5a6268', '#7a8288');
     }
   }
-  drawPlatformProps(p, sx, y);
-  if(p.checkpoint && !p.falling){
-    const fx=sx+p.w/2;
-    ctx.strokeStyle='#8a8a82'; ctx.lineWidth=2;
-    ctx.beginPath(); ctx.moveTo(fx,y); ctx.lineTo(fx,y-34); ctx.stroke();
-    ctx.fillStyle='#d4c090';
-    ctx.beginPath(); ctx.moveTo(fx,y-34); ctx.lineTo(fx+18,y-26); ctx.lineTo(fx,y-18); ctx.closePath(); ctx.fill();
+  if(p.type!=='bts'){
+    drawPlatformProps(p, sx, y);
+    if(p.checkpoint && !p.falling){
+      const fx=sx+p.w/2;
+      ctx.strokeStyle='#8a8a82'; ctx.lineWidth=2;
+      ctx.beginPath(); ctx.moveTo(fx,y); ctx.lineTo(fx,y-34); ctx.stroke();
+      ctx.fillStyle='#d4c090';
+      ctx.beginPath(); ctx.moveTo(fx,y-34); ctx.lineTo(fx+18,y-26); ctx.lineTo(fx,y-18); ctx.closePath(); ctx.fill();
+    }
   }
   ctx.globalAlpha=1;
 }

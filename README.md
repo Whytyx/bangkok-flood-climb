@@ -1,10 +1,9 @@
 # Bangkok Flood Climb
 
-## V1.6.4
-- **7-Eleven** signs/storefronts with recognizable orange–green–red fascia
-- **BTS** skytrain stations/trains in teal/white (not gray blobs)
-- Background landmarks for both
+## V1.6.5
+- **BTS stations are climbable** — teal elevated decks with real collision (pillars/train are visuals under the deck)
+- Background BTS landmarks faded/far only so they don’t look like fake platforms
 
-Prior: lively Bangkok art, slow flood chase, audio resume fixes.
+Prior: 7-Eleven façades, lively Bangkok art, slow flood, audio fixes.
 
 **Live:** https://whytyx.github.io/bangkok-flood-climb/
