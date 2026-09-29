@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="th">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
@@ -17,7 +17,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#7a8790;font-family:
 .hud-badge{background:rgba(42,48,54,.8);border:1px solid rgba(255,255,255,.16);border-radius:10px;padding:8px 14px;color:#f0eee8;backdrop-filter:blur(8px);box-shadow:0 3px 12px rgba(0,0,0,.28)}
 .hud-badge .label{font-size:10px;letter-spacing:1px;color:#b0b8c0;text-transform:uppercase}
 .hud-badge .val{font-size:22px;font-weight:800;color:#f5f2eb}
-.hud-warn{font-size:11px;color:#d4c4a0;margin-top:2px;min-height:14px}
+.hud-warn{font-size:12px;color:#e8d8b0;margin-top:3px;min-height:16px;font-weight:600;text-shadow:0 1px 2px rgba(0,0,0,.35)}
 .hud-right{display:flex;gap:8px}
 .icon-btn{width:44px;height:44px;border-radius:10px;border:1px solid rgba(255,255,255,.2);background:rgba(42,48,54,.8);color:#e8e4dc;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.22)}
 .icon-btn:active{transform:scale(.94)}
@@ -54,7 +54,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#7a8790;font-family:
 <canvas id="game"></canvas>
 <div id="ui">
   <div class="hud" id="hud" style="display:none">
-    <div class="hud-badge"><div class="label">Height</div><div class="val" id="heightVal">0 m</div><div class="hud-warn" id="hazardWarn"></div></div>
+    <div class="hud-badge"><div class="label">ความสูง · Height</div><div class="val" id="heightVal">0 m</div><div class="hud-warn" id="hazardWarn"></div></div>
     <div class="hud-right">
       <button class="icon-btn interactive" id="pauseBtn" title="Pause" type="button">⏸</button>
       <button class="icon-btn interactive" id="muteBtn" title="Mute" type="button">🔊</button>
@@ -71,7 +71,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#7a8790;font-family:
       <div class="custom-row"><label>Skin</label><div class="swatches" id="skinSwatches"></div></div>
       <div class="custom-row"><label>Hat</label><div class="swatches" id="hatSwatches"></div></div>
     </div>
-    <p class="tip">Flooded Bangkok — climb lively rooftops. Water rises. ป้า throws noodles. Birds, wind, wires &amp; wet roofs.</p>
+    <p class="tip">กรุงเทพน้ำท่วม — ไต่หลังคา ป้าย 7‑Eleven · BTS · สยาม<br>Water rises. Auntie throws noodles. Birds, wind &amp; wet roofs.</p>
     <button class="btn interactive" id="startBtn" type="button">START CLIMB</button>
     <p class="tip" style="margin-top:14px;font-size:11px">← → / A D move · Space / W / ↑ jump<br>Mobile: on-screen buttons</p>
   </div>
@@ -88,10 +88,10 @@ html,body{width:100%;height:100%;overflow:hidden;background:#7a8790;font-family:
     <button class="btn secondary interactive" id="pauseMenuBtn" type="button">TITLE</button>
   </div>
   <div id="gameOverScreen" class="hidden interactive">
-    <h2>SPLASHED!</h2>
+    <h2>จมน้ำ! SPLASHED!</h2>
     <div class="score-big" id="finalHeight">0 m</div>
     <div class="best" id="bestHeight">Best: 0 m</div>
-    <p class="tip">The flood got you. Climb higher next time.</p>
+    <p class="tip">น้ำท่วมแล้ว — ไต่ให้สูงขึ้นรอบหน้า<br>The flood got you. Climb higher next time.</p>
     <button class="btn interactive" id="retryBtn" type="button">TRY AGAIN</button>
     <button class="btn secondary interactive" id="menuBtn" type="button">TITLE</button>
   </div>
@@ -100,7 +100,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#7a8790;font-family:
     <div class="mc-zone" id="mcRight" role="button" aria-label="Right">▶</div>
     <div class="mc-zone" id="mcJump" role="button" aria-label="Jump">⬆</div>
   </div>
-  <div id="watermark">BANGKOK FLOOD CLIMB V1.6.6</div>
+  <div id="watermark">BANGKOK FLOOD CLIMB V1.7.0</div>
 </div>
 <script>
 (function(){
@@ -116,9 +116,16 @@ function resize(){
   canvas.width = Math.floor(W * DPR); canvas.height = Math.floor(H * DPR);
   canvas.style.width = W+'px'; canvas.style.height = H+'px';
   ctx.setTransform(DPR,0,0,DPR,0,0);
+  skyGrad=null; waterGradCache=null; // rebuild cached gradients
+  if(typeof makeRain==='function' && rain) makeRain();
   if(player) snapCamera(true);
+  if(state===STATE.PLAY){
+    if(isMobile()) mc.classList.add('visible');
+    else mc.classList.remove('visible');
+  }
 }
 window.addEventListener('resize', resize);
+window.addEventListener('orientationchange', ()=>setTimeout(resize, 80));
 
 const STATE = { TITLE:0, PLAY:1, DEAD:2, PAUSE:3 };
 let state = STATE.TITLE;
@@ -299,11 +306,25 @@ window.addEventListener('blur',()=>{ Object.keys(keysDown).forEach(k=>keysDown[k
 function isMobile(){ return ('ontouchstart' in window)||navigator.maxTouchPoints>0||W<820; }
 const mc=document.getElementById('mobileControls');
 function bindHold(el,onP,onR){
-  const down=e=>{e.preventDefault();e.stopPropagation();el.classList.add('active');onP();};
-  const up=e=>{e.preventDefault();e.stopPropagation();el.classList.remove('active');onR();};
-  el.addEventListener('pointerdown',down); el.addEventListener('pointerup',up); el.addEventListener('pointercancel',up);
-  el.addEventListener('pointerleave',e=>{if(el.classList.contains('active'))up(e);});
-  el.addEventListener('touchstart',down,{passive:false}); el.addEventListener('touchend',up,{passive:false}); el.addEventListener('touchcancel',up,{passive:false});
+  /* Pointer-only: dual pointer+touch was double-firing jump on mobile */
+  let held=false;
+  const down=e=>{
+    e.preventDefault(); e.stopPropagation();
+    if(held) return;
+    held=true;
+    try{ if(e.pointerId!=null) el.setPointerCapture(e.pointerId); }catch(_){}
+    el.classList.add('active'); onP();
+  };
+  const up=e=>{
+    if(!held) return;
+    held=false;
+    if(e&&e.preventDefault){ e.preventDefault(); e.stopPropagation(); }
+    el.classList.remove('active'); onR();
+  };
+  el.addEventListener('pointerdown',down);
+  el.addEventListener('pointerup',up);
+  el.addEventListener('pointercancel',up);
+  el.addEventListener('lostpointercapture',()=>{ if(held) up(null); });
 }
 bindHold(document.getElementById('mcLeft'),()=>input.left=true,()=>input.left=false);
 bindHold(document.getElementById('mcRight'),()=>input.right=true,()=>input.right=false);
@@ -450,16 +471,19 @@ function unlockAndPlayBgm(){
 function stopBgm(){ if(bgmTimer){clearInterval(bgmTimer);bgmTimer=null;} if(bgmNodes){ try{bgmNodes.drone.stop();}catch(e){} try{if(bgmNodes.drone2)bgmNodes.drone2.stop();}catch(e){} bgmNodes=null;} }
 
 const GRAVITY=0.78, MOVE_ACC=0.95, MOVE_MAX=5.2, FRICTION_G=0.76, FRICTION_A=0.92;
-const JUMP_V=-12.4, JUMP_HOLD_FORCE=-0.42, JUMP_HOLD_MAX_FRAMES=12, COYOTE_MAX=8, DEPTH=12;
+const JUMP_V=-12.4, JUMP_HOLD_FORCE=-0.42, JUMP_HOLD_MAX_FRAMES=12, COYOTE_MAX=10, DEPTH=12;
 const WORLD_MARGIN=420;
 
 let player, platforms, particles, decorations, landmarks, birds, wires, aunties, projectiles;
 let cameraX, cameraY, waterY, waterSpeed, waterBaseSpeed, highestY, scoreHeight, checkpointY;
 let frame, rain, mist, lastPlatY, climbCenterX, citySil, splashes;
-let wind={active:false, vx:0, timer:0, cooldown:180};
-let waterSurge={active:false, timer:0, cooldown:400};
+let wind={active:false, vx:0, timer:0, cooldown:180, warn:0};
+let waterSurge={active:false, timer:0, cooldown:400, warn:0};
 let standingPlat=null, standTime=0;
 let warnText='';
+let skyGrad=null, waterGradCache=null;
+const PARTICLE_MAX=72, SPLASH_MAX=18;
+let particlePool=[];
 
 const PLATFORM_TYPES=[
   {name:'rooftop',w:[110,190],h:18,top:'#9aa0a6',side:'#6e747c',front:'#848a92'},
@@ -488,37 +512,39 @@ function makePlayer(x,y){
 function assignHazards(p, index, heightApprox){
   const hf = Math.min(1, Math.max(0, -p.y/2500));
   // Slippery wet roofs — common on rooftops/awnings
-  p.slippery = (p.type==='rooftop'||p.type==='awning') && Math.random() < 0.28+hf*0.2;
-  // Swaying / moving platforms (never for solid BTS stations)
+  p.slippery = (p.type==='rooftop'||p.type==='awning') && Math.random() < 0.22+hf*0.18;
+  // Swaying / moving platforms (never BTS / solid malls)
   p.sway = false; p.move = false;
-  if(p.type!=='bts' && index>4 && Math.random()<0.18+hf*0.15){
-    if(Math.random()<0.55){ p.sway=true; p.swayAmp=rand(10,28); p.swaySpd=rand(0.02,0.045); p.swayPhase=Math.random()*Math.PI*2; p.baseX=p.x; }
-    else { p.move=true; p.moveAmp=rand(28,55); p.moveSpd=rand(0.015,0.035); p.movePhase=Math.random()*Math.PI*2; p.baseX=p.x; }
+  const solidShop = p.label==='7-11'||p.label==='SIAM'||p.type==='bts';
+  if(!solidShop && p.type!=='bts' && index>5 && Math.random()<0.14+hf*0.12){
+    if(Math.random()<0.55){ p.sway=true; p.swayAmp=rand(8,22); p.swaySpd=rand(0.018,0.038); p.swayPhase=Math.random()*Math.PI*2; p.baseX=p.x; }
+    else { p.move=true; p.moveAmp=rand(22,48); p.moveSpd=rand(0.012,0.03); p.movePhase=Math.random()*Math.PI*2; p.baseX=p.x; }
   }
-  // Collapsing signs/billboards after brief stand (not BTS stations)
-  p.collapse = (p.type==='sign'||p.type==='billboard') && index>6 && Math.random()<0.35+hf*0.2;
-  p.collapseTimer=0; p.collapseMax=rand(45,75); // frames standing before fall
+  // Collapse: never solid Bangkok landmarks (7-11 / SIAM / BTS)
+  p.collapse = !solidShop && (p.type==='sign'||p.type==='billboard') && index>8 && Math.random()<0.28+hf*0.15;
+  p.collapseTimer=0; p.collapseMax=rand(55,90); // more telegraph time
   p.falling=false; p.fallVy=0; p.gone=false;
   p.bob=Math.random()*Math.PI*2; p.stain=Math.random();
-  // life on platforms
+  // life on platforms — keep light (less muddy)
   p.props=[];
   if(p.type==='rooftop'){
-    if(Math.random()<0.55) p.props.push({k:'dish', ox:rand(0.55,0.85)});
-    if(Math.random()<0.5) p.props.push({k:'plant', ox:rand(0.08,0.35)});
-    if(Math.random()<0.35) p.props.push({k:'tank', ox:rand(0.2,0.5)});
-    if(Math.random()<0.3) p.props.push({k:'laundry', ox:rand(0.15,0.55)});
-    if(Math.random()<0.25) p.props.push({k:'cat', ox:rand(0.3,0.7)});
-  } else if(p.type==='awning' && Math.random()<0.5){
+    if(Math.random()<0.4) p.props.push({k:'dish', ox:rand(0.55,0.85)});
+    if(Math.random()<0.35) p.props.push({k:'plant', ox:rand(0.08,0.35)});
+    if(Math.random()<0.22) p.props.push({k:'tank', ox:rand(0.2,0.5)});
+    if(Math.random()<0.2) p.props.push({k:'laundry', ox:rand(0.15,0.55)});
+    if(Math.random()<0.15) p.props.push({k:'cat', ox:rand(0.3,0.7)});
+  } else if(p.type==='awning' && Math.random()<0.4){
     p.props.push({k:'lantern', ox:0.5});
-  } else if(p.type==='boat' && Math.random()<0.6){
+  } else if(p.type==='boat' && Math.random()<0.5){
     p.props.push({k:'crate', ox:rand(0.2,0.6)});
   } else if(p.type==='tuktuk'){
     p.props.push({k:'tuktukdetail', ox:0.5});
   } else if(p.type==='bts'){
     p.label='BTS';
-    p.slippery=false; p.collapse=false;
+    p.slippery=false; p.collapse=false; p.sway=false; p.move=false;
     p.props.push({k:'btstrain', ox:0.5});
   }
+  if(solidShop){ p.slippery=false; p.collapse=false; p.sway=false; p.move=false; }
   return p;
 }
 
@@ -549,29 +575,54 @@ function platWorldX(p){
   return p.x;
 }
 
+/** Nudge X so platforms near the same height don't stack unfairly */
+function clearPlatformX(nx, y, wApprox){
+  const half=wApprox*0.5;
+  for(let k=0;k<platforms.length;k++){
+    const q=platforms[k];
+    if(q.gone) continue;
+    if(Math.abs(q.y-y)<46){
+      const qx=q.baseX!=null?q.baseX:q.x;
+      const left=nx-half, right=nx+half;
+      const qL=qx, qR=qx+q.w;
+      if(right>qL-14 && left<qR+14){
+        // push away from overlapped neighbor
+        if(nx < qx+q.w*0.5) nx = qL - 18 - half;
+        else nx = qR + 18 + half;
+      }
+    }
+  }
+  if(Math.abs(nx-climbCenterX)>WORLD_MARGIN) nx = climbCenterX + Math.sign(nx||1)*WORLD_MARGIN*0.85;
+  return nx;
+}
+
 function generateInitialPlatforms(){
   platforms=[]; climbCenterX=0; wires=[];
   const start=makePlatform(climbCenterX,0,PLATFORM_TYPES[0],0);
   start.w=200; start.x=climbCenterX-100; start.baseX=start.x; start.checkpoint=true;
   start.slippery=false; start.sway=false; start.move=false; start.collapse=false;
   platforms.push(start);
-  let y=-55, prevX=climbCenterX;
+  let y=-52, prevX=climbCenterX;
   for(let i=0;i<55;i++){
-    const hf=Math.min(1,i/40);
-    const gap=rand(48+hf*8, 78+hf*28); // wider with height
+    const hf=Math.min(1,i/45);
+    // Fairer curve: readable early, still climbs later
+    const gap=rand(46+hf*6, 70+hf*20);
     y-=gap;
-    let dx=rand(-(80+hf*25), 80+hf*25);
-    if(i>12 && Math.random()<0.07+hf*0.06) dx=(Math.random()<0.5?-1:1)*rand(100, 120+hf*30);
+    let dx=rand(-(70+hf*20), 70+hf*20);
+    if(i>14 && Math.random()<0.05+hf*0.05) dx=(Math.random()<0.5?-1:1)*rand(92, 110+hf*22);
     let nx=prevX+dx;
     if(Math.abs(nx-climbCenterX)>WORLD_MARGIN) nx=prevX-dx*0.5;
-    // Every ~7 platforms: solid climbable BTS station (looks like the teal skytrain)
     const forceBts = (i>3 && i%7===0);
+    const roughW = forceBts ? 175 : 110;
+    nx=clearPlatformX(nx, y, roughW);
     const p=makePlatform(nx,y, forceBts?BTS_TYPE:null, i+1);
-    if(i>0 && i%8===0){ p.checkpoint=true; p.collapse=false; p.slippery=false; }
+    // re-center after true width known
+    const cx=clearPlatformX(p.x+p.w/2, y, p.w);
+    p.x=cx-p.w/2; p.baseX=p.x;
+    if(i>0 && i%8===0){ p.checkpoint=true; p.collapse=false; p.slippery=false; p.sway=false; p.move=false; }
     platforms.push(p);
-    // Occasional wires between platforms
-    if(i>8 && Math.random()<0.22+hf*0.15){
-      wires.push({ x:nx+rand(-40,40), y1:y+rand(20,50), y2:y+rand(90,160), lean:rand(-12,12), hit:false });
+    if(i>10 && Math.random()<0.16+hf*0.12){
+      wires.push({ x:nx+rand(-40,40), y1:y+rand(24,55), y2:y+rand(100,170), lean:rand(-12,12), hit:false });
     }
     prevX=p.x+p.w/2;
   }
@@ -581,20 +632,23 @@ function generateInitialPlatforms(){
 function extendPlatforms(){
   while(lastPlatY > player.y - H*3){
     const hf=heightFactor();
-    const gap=rand(50+hf*10, 80+hf*32);
+    const gap=rand(48+hf*8, 72+hf*22);
     lastPlatY-=gap;
     const last=platforms[platforms.length-1];
     const prevX=platWorldX(last)+last.w/2;
-    let dx=rand(-(85+hf*30), 85+hf*30);
-    if(Math.random()<0.08+hf*0.05) dx=(Math.random()<0.5?-1:1)*rand(105,130+hf*25);
+    let dx=rand(-(75+hf*24), 75+hf*24);
+    if(Math.random()<0.06+hf*0.04) dx=(Math.random()<0.5?-1:1)*rand(95,118+hf*20);
     let nx=prevX+dx;
     if(Math.abs(nx-player.x)>WORLD_MARGIN) nx=prevX-Math.sign(dx||1)*Math.abs(dx)*0.4;
     const forceBts = (platforms.length%7===0);
+    nx=clearPlatformX(nx, lastPlatY, forceBts?175:110);
     const p=makePlatform(nx,lastPlatY, forceBts?BTS_TYPE:null, platforms.length);
-    if(platforms.length%8===0){ p.checkpoint=true; p.collapse=false; }
+    const cx=clearPlatformX(p.x+p.w/2, lastPlatY, p.w);
+    p.x=cx-p.w/2; p.baseX=p.x;
+    if(platforms.length%8===0){ p.checkpoint=true; p.collapse=false; p.slippery=false; p.sway=false; p.move=false; }
     platforms.push(p);
-    if(Math.random()<0.2+hf*0.15){
-      wires.push({ x:nx+rand(-50,50), y1:lastPlatY+rand(15,45), y2:lastPlatY+rand(80,150), lean:rand(-14,14), hit:false });
+    if(Math.random()<0.14+hf*0.12){
+      wires.push({ x:nx+rand(-50,50), y1:lastPlatY+rand(20,50), y2:lastPlatY+rand(90,160), lean:rand(-14,14), hit:false });
     }
   }
   const cullY=Math.max(waterY,cameraY+H)+280;
@@ -605,15 +659,17 @@ function extendPlatforms(){
 function makeDecorations(){
   decorations=[];
   const fronts=['#6a7278','#5e666c','#737a70','#8a8078','#5a6468','#706860','#62706a','#7a7470'];
-  for(let i=0;i<55;i++){
-    const w=rand(48,160), h=rand(90,380);
+  const nDec = W<500 ? 28 : 36;
+  for(let i=0;i<nDec;i++){
+    const w=rand(48,140), h=rand(90,320);
+    const far = i%3!==0;
     decorations.push({
       x:rand(-700,700), y:rand(-3800,320), w, h,
-      shade:rand(0.32,0.62), windows:Math.random()<0.78,
+      shade: far ? rand(0.18,0.34) : rand(0.38,0.55), windows:Math.random()<0.7,
       front:pick(fronts), side:pick(['#4a5258','#454c52','#3e464c']), top:pick(['#8a9096','#7e868c','#949a90']),
-      balconies: Math.random()<0.55, laundry: Math.random()<0.35, ac: Math.random()<0.5,
-      roofTank: Math.random()<0.4, antenna: Math.random()<0.3, plants: Math.random()<0.45,
-      seed: randi(1,9999)
+      balconies: !far && Math.random()<0.4, laundry: !far && Math.random()<0.25, ac: !far && Math.random()<0.35,
+      roofTank: !far && Math.random()<0.3, antenna: Math.random()<0.22, plants: !far && Math.random()<0.3,
+      seed: randi(1,9999), far
     });
   }
   // far silhouette strip
@@ -632,14 +688,16 @@ function makeDecorations(){
 }
 function makeRain(){
   rain=[];
-  for(let i=0;i<110;i++) rain.push({
-    x:Math.random()*W, y:Math.random()*H, len:rand(8,18),
-    spd:rand(7,14), alpha:rand(0.1,0.28), thick:Math.random()<0.2?1.5:1
+  const nRain = W<500 ? 42 : 58;
+  for(let i=0;i<nRain;i++) rain.push({
+    x:Math.random()*W, y:Math.random()*H, len:rand(8,16),
+    spd:rand(7,13), alpha:rand(0.1,0.26), thick:Math.random()<0.18?1.4:1
   });
   mist=[];
-  for(let i=0;i<14;i++) mist.push({
-    x:rand(-80,W+80), y:rand(H*0.25,H*0.95), w:rand(140,340), h:rand(50,110),
-    a:rand(0.05,0.14), spd:rand(0.1,0.4)
+  const nMist = W<500 ? 8 : 10;
+  for(let i=0;i<nMist;i++) mist.push({
+    x:rand(-80,W+80), y:rand(H*0.25,H*0.95), w:rand(140,300), h:rand(50,100),
+    a:rand(0.04,0.11), spd:rand(0.1,0.35)
   });
   splashes=[];
 }
@@ -659,9 +717,9 @@ function resetGame(fromCheckpoint){
   /* Full clean slate — never respawn submerged (V1.6.1) */
   input.left=false; input.right=false; input.jumpHeld=false; input.jumpPressed=false; jumpBuffer=0;
   birds=[]; aunties=[]; projectiles=[]; wires=[]; standingPlat=null; standTime=0; warnText='';
-  wind={active:false,vx:0,timer:0,cooldown:200};
-  waterSurge={active:false,timer:0,cooldown:450};
-  particles=[];
+  wind={active:false,vx:0,timer:0,cooldown:220,warn:0};
+  waterSurge={active:false,timer:0,cooldown:480,warn:0};
+  particles.length=0; particlePool.length=0;
 
   const useCheckpoint = !!(fromCheckpoint && checkpointY!==undefined && platforms && platforms.length);
   if(!useCheckpoint){
@@ -708,10 +766,18 @@ function snapCamera(hard){
 function wx(x){ return x-cameraX; }
 function wy(y){ return y-cameraY; }
 
-function spawnSplash(x,y,n){ for(let i=0;i<n;i++) particles.push({x,y,vx:rand(-3.5,3.5),vy:rand(-7,-1.5),life:rand(18,36),max:36,r:rand(2,5),color:pick(['#6a7a5a','#8a9a70','#5a6a50','#a0a888'])}); }
-function spawnDust(x,y){ for(let i=0;i<5;i++) particles.push({x:x+rand(-8,8),y,vx:rand(-1.5,1.5),vy:rand(-2.5,-0.3),life:rand(8,16),max:16,r:rand(1,2.5),color:'rgba(160,155,145,0.5)'}); }
-function spawnSpark(x,y){ for(let i=0;i<8;i++){ const a=Math.random()*Math.PI*2; particles.push({x,y,vx:Math.cos(a)*rand(0.8,3),vy:Math.sin(a)*rand(0.8,3),life:rand(12,24),max:24,r:rand(1.5,3),color:'#c8b890'}); } }
-function spawnDebris(x,y){ for(let i=0;i<10;i++) particles.push({x:x+rand(-20,20),y,vx:rand(-3,3),vy:rand(-5,-1),life:rand(20,40),max:40,r:rand(2,5),color:pick(['#6a7078','#8a9098','#5a6068'])}); }
+function acquireParticle(){ return particlePool.pop() || {x:0,y:0,vx:0,vy:0,life:0,max:1,r:1,color:'#fff'}; }
+function releaseParticle(p){ if(particlePool.length<PARTICLE_MAX) particlePool.push(p); }
+function emitParticle(x,y,vx,vy,life,r,color){
+  if(particles.length>=PARTICLE_MAX) return;
+  const p=acquireParticle();
+  p.x=x; p.y=y; p.vx=vx; p.vy=vy; p.life=life; p.max=life; p.r=r; p.color=color;
+  particles.push(p);
+}
+function spawnSplash(x,y,n){ n=Math.min(n|0,12); for(let i=0;i<n;i++) emitParticle(x,y,rand(-3.5,3.5),rand(-7,-1.5),rand(18,36)|0,rand(2,5),pick(['#6a7a5a','#8a9a70','#5a6a50','#a0a888'])); }
+function spawnDust(x,y){ for(let i=0;i<4;i++) emitParticle(x+rand(-8,8),y,rand(-1.5,1.5),rand(-2.5,-0.3),rand(8,16)|0,rand(1,2.5),'rgba(160,155,145,0.5)'); }
+function spawnSpark(x,y){ for(let i=0;i<6;i++){ const a=Math.random()*Math.PI*2; emitParticle(x,y,Math.cos(a)*rand(0.8,3),Math.sin(a)*rand(0.8,3),rand(12,24)|0,rand(1.5,3),'#c8b890'); } }
+function spawnDebris(x,y){ for(let i=0;i<8;i++) emitParticle(x+rand(-20,20),y,rand(-3,3),rand(-5,-1),rand(20,40)|0,rand(2,5),pick(['#6a7078','#8a9098','#5a6068'])); }
 
 
 function beginSink(){
@@ -723,13 +789,12 @@ function beginSink(){
   player.vx *= 0.25;
   player.vy = 1.2;
   player.stun = 999;
-  spawnSplash(player.x, waterY, 28);
+  spawnSplash(player.x, waterY, 12);
   sfxSplash();
-  warnText = 'Sinking…';
+  warnText = 'จมน้ำ… Sinking…';
   // extra bubbles
-  for(let i=0;i<10;i++){
-    particles.push({x:player.x+rand(-10,10), y:waterY, vx:rand(-1,1), vy:rand(-3,-0.5),
-      life:rand(25,50), max:50, r:rand(2,5), color:'rgba(200,210,190,0.7)'});
+  for(let i=0;i<8;i++){
+    emitParticle(player.x+rand(-10,10), waterY, rand(-1,1), rand(-3,-0.5), rand(25,50)|0, rand(2,5), 'rgba(200,210,190,0.7)');
   }
 }
 function updateSink(){
@@ -748,8 +813,7 @@ function updateSink(){
   if(player.y < waterY + 8) player.y += 0.8;
   player.sinkAlpha = Math.max(0, 1 - player.sinkTimer/55);
   if(player.sinkTimer % 6 === 0){
-    particles.push({x:player.x+rand(-8,8), y:Math.min(player.y, waterY+4), vx:rand(-0.8,0.8), vy:rand(-2.5,-0.3),
-      life:20, max:20, r:rand(1.5,3.5), color:'rgba(210,215,200,0.65)'});
+    emitParticle(player.x+rand(-8,8), Math.min(player.y, waterY+4), rand(-0.8,0.8), rand(-2.5,-0.3), 20, rand(1.5,3.5), 'rgba(210,215,200,0.65)');
   }
   if(player.sinkTimer > 50){
     player.alive = false;
@@ -767,26 +831,36 @@ function tryJump(){
 
 function updateHazardsMeta(){
   const hf=heightFactor();
-  // Wind gusts
-  if(!wind.active){
+  // Wind — telegraph then gust
+  if(wind.warn>0){
+    wind.warn--; warnText='ลมแรง! Wind coming…';
+    if(wind.warn<=0){
+      wind.active=true; wind.vx=(Math.random()<0.5?-1:1)*rand(0.1,0.22+hf*0.08);
+      wind.timer=rand(70,130); sfxWind(); warnText='ลมแรง! Wind gust!';
+    }
+  } else if(!wind.active){
     wind.cooldown--;
-    if(wind.cooldown<=0 && scoreHeight>25 && Math.random()<0.02+hf*0.02){
-      wind.active=true; wind.vx=(Math.random()<0.5?-1:1)*rand(0.12,0.28+hf*0.1);
-      wind.timer=rand(90,160); sfxWind(); warnText='Wind gust!';
+    if(wind.cooldown<=0 && scoreHeight>28 && Math.random()<0.015+hf*0.015){
+      wind.warn=45; wind.cooldown=9999;
     }
   } else {
     wind.timer--;
-    if(wind.timer<=0){ wind.active=false; wind.vx=0; wind.cooldown=rand(220,380); if(warnText==='Wind gust!') warnText=''; }
+    if(wind.timer<=0){ wind.active=false; wind.vx=0; wind.cooldown=rand(260,420); if(warnText.indexOf('Wind')>=0||warnText.indexOf('ลม')>=0) warnText=''; }
   }
-  // Water surge periods
-  if(!waterSurge.active){
+  // Flood surge — telegraph
+  if(waterSurge.warn>0){
+    waterSurge.warn--; warnText='น้ำขึ้น! Flood rising…';
+    if(waterSurge.warn<=0){
+      waterSurge.active=true; waterSurge.timer=rand(100,170); warnText='น้ำท่วม! Flood surge!';
+    }
+  } else if(!waterSurge.active){
     waterSurge.cooldown--;
-    if(waterSurge.cooldown<=0 && scoreHeight>40 && Math.random()<0.015){
-      waterSurge.active=true; waterSurge.timer=rand(120,200); warnText='Flood surge!';
+    if(waterSurge.cooldown<=0 && scoreHeight>45 && Math.random()<0.012){
+      waterSurge.warn=50; waterSurge.cooldown=9999;
     }
   } else {
     waterSurge.timer--;
-    if(waterSurge.timer<=0){ waterSurge.active=false; waterSurge.cooldown=rand(400,700); if(warnText==='Flood surge!') warnText=''; }
+    if(waterSurge.timer<=0){ waterSurge.active=false; waterSurge.cooldown=rand(450,750); if(warnText.indexOf('Flood')>=0||warnText.indexOf('น้ำ')>=0) warnText=''; }
   }
 }
 
@@ -849,32 +923,39 @@ function updatePlayer(){
   let landed=null;
 
   if(player.vy>=0){
-    for(const p of platforms){
+    let best=null, bestY=1e9, bestPx=0;
+    const feet=player.y+player.h/2;
+    const pad=Math.max(player.vy,0)+5;
+    for(let i=0;i<platforms.length;i++){
+      const p=platforms[i];
       if(p.gone||p.falling) continue;
       const px=platWorldX(p); p.x=px;
-      const feet=player.y+player.h/2;
-      if(player.x+player.w/2>px+2 && player.x-player.w/2<px+p.w-2 &&
-         prevFeet<=p.y+4 && feet>=p.y && feet<=p.y+p.h+Math.max(player.vy,0)+4){
-        player.y=p.y-player.h/2;
-        if(!wasGround&&player.vy>2.5){ spawnDust(player.x,p.y); sfxLand(); }
-        player.vy=0; player.onGround=true; player.coyote=COYOTE_MAX;
-        player.squish=1.12; player.stretch=0.9;
-        landed=p; p._lx=px;
-        if(jumpBuffer>0) tryJump();
-        if(p.checkpoint&&p.y<checkpointY-8){ checkpointY=p.y; sfxCheckpoint(); spawnSpark(px+p.w/2,p.y); }
-        else if(p.checkpoint&&checkpointY===0&&p.y<=0) checkpointY=p.y;
-        break;
+      if(player.x+player.w/2>px+3 && player.x-player.w/2<px+p.w-3 &&
+         prevFeet<=p.y+5 && feet>=p.y-1 && feet<=p.y+p.h+pad){
+        // Prefer highest deck (lowest y) to avoid sinking into stacked props
+        if(p.y < bestY){ best=p; bestY=p.y; bestPx=px; }
       }
+    }
+    if(best){
+      const p=best, px=bestPx;
+      player.y=p.y-player.h/2;
+      if(!wasGround&&player.vy>2.5){ spawnDust(player.x,p.y); sfxLand(); }
+      player.vy=0; player.onGround=true; player.coyote=COYOTE_MAX;
+      player.squish=1.12; player.stretch=0.9;
+      landed=p; p._lx=px;
+      if(jumpBuffer>0) tryJump();
+      if(p.checkpoint&&p.y<checkpointY-8){ checkpointY=p.y; sfxCheckpoint(); spawnSpark(px+p.w/2,p.y); }
+      else if(p.checkpoint&&checkpointY===0&&p.y<=0) checkpointY=p.y;
     }
   }
 
   if(landed){
-    if(standingPlat!==landed){ standingPlat=landed; standTime=0; }
+    if(standingPlat!==landed){ standingPlat=landed; standTime=0; landed._lx=platWorldX(landed); }
     standTime++;
-    if(landed.slippery) warnText='Wet roof — slippery!';
-    else if(landed.collapse) warnText='Unstable sign!';
-    else if(landed.sway||landed.move) warnText='Moving platform';
-    else if(!wind.active && !waterSurge.active) warnText='';
+    if(landed.slippery) warnText='หลังคาเปียก! Wet roof!';
+    else if(landed.collapse) warnText= standTime>landed.collapseMax*0.35 ? 'ป้ายหลวม! Sign unstable!' : 'ป้ายสั่น… Sign creaks…';
+    else if(landed.sway||landed.move) warnText='แท่นเลื่อน Moving';
+    else if(!wind.active && !waterSurge.active && !wind.warn && !waterSurge.warn) warnText='';
 
     // Collapse after brief stand
     if(landed.collapse && standTime>=landed.collapseMax){
@@ -883,7 +964,7 @@ function updatePlayer(){
     }
   } else {
     standingPlat=null; standTime=0;
-    if(!wind.active && !waterSurge.active) warnText='';
+    if(!wind.active && !waterSurge.active && !wind.warn && !waterSurge.warn) warnText='';
   }
 
   if(player.onGround) player.coyote=COYOTE_MAX;
@@ -900,7 +981,7 @@ function updatePlayer(){
       w.hit=true; sfxWire();
       player.stun=22; player.vx+=(player.x<cx?-1:1)*4.5;
       if(player.vy<0) player.vy*=0.2; player.vy+=3;
-      player.onGround=false; spawnDust(player.x,player.y); warnText='Wire!';
+      player.onGround=false; spawnDust(player.x,player.y); warnText='สายไฟ! Wire!';
     }
   }
 
@@ -920,11 +1001,11 @@ function spawnAuntie(){
     x:ax, y:ay, side:side, life:rand(160,260), throwCd:rand(20,40),
     wave:0, mood:pick(['clothes','noodles','clothes','noodles'])
   });
-  warnText = 'ป้า! ระวัง!';
+  warnText = 'ป้า! ระวังของ! Auntie!';
   sfxAuntie();
 }
 function updateAunties(){
-  if(scoreHeight>8 && aunties.length<2 && Math.random()<0.008+heightFactor()*0.006){
+  if(scoreHeight>10 && aunties.length<2 && Math.random()<0.006+heightFactor()*0.005){
     spawnAuntie();
   }
   for(let i=aunties.length-1;i>=0;i--){
@@ -967,7 +1048,7 @@ function updateAunties(){
       if(player.vy<0) player.vy*=0.35;
       player.vy += 2.2;
       player.onGround=false;
-      warnText = p.kind==='noodles' ? 'Noodles! ก๋วยเตี๋ยว!' : 'Clothes! เสื้อผ้า!';
+      warnText = p.kind==='noodles' ? 'ก๋วยเตี๋ยว! Noodles!' : 'เสื้อผ้า! Clothes!';
       spawnDust(player.x, player.y);
       projectiles.splice(i,1);
     }
@@ -1031,8 +1112,8 @@ function drawProjectiles(){
 
 function updateBirds(){
   const hf=heightFactor();
-  const maxB=2+Math.min(4,(scoreHeight/60|0));
-  if(scoreHeight>12 && birds.length<maxB && Math.random()<0.014+hf*0.01) spawnBird(player.y);
+  const maxB=2+Math.min(3,(scoreHeight/70|0));
+  if(scoreHeight>14 && birds.length<maxB && Math.random()<0.011+hf*0.008) spawnBird(player.y);
   for(let i=birds.length-1;i>=0;i--){
     const b=birds[i];
     b.x+=b.vx; b.wing+=0.35; b.y+=Math.sin(frame*0.05+b.bob)*0.4;
@@ -1047,7 +1128,7 @@ function updateBirds(){
       if(player.vy<2) player.vy=4;
       player.onGround=false; player.coyote=0;
       standingPlat=null; standTime=0;
-      spawnDust(player.x,player.y); warnText='Bird hit!';
+      spawnDust(player.x,player.y); warnText='นกชน! Bird!';
     }
   }
 }
@@ -1067,19 +1148,29 @@ function die(){
 }
 
 function updateWater(){
-  /* V1.6.2: slower visible chase */
+  /* V1.7: visible chase, not frantic */
   if(player && player.sinking){ waterSpeed = 0.15; return; }
   const feet = player.y + player.h/2;
   const gap = waterY - feet;
-  const desiredGap = Math.max(160, 340 - scoreHeight * 0.25);
-  let rise = waterBaseSpeed + scoreHeight * 0.0012;
-  if(waterSurge.active) rise *= 1.85;
-  if(gap > desiredGap) rise += Math.min(1.15, (gap - desiredGap) * 0.008);
-  if(gap < 180 && gap > 50) rise += 0.08;
+  const desiredGap = Math.max(170, 360 - scoreHeight * 0.22);
+  let rise = waterBaseSpeed + scoreHeight * 0.001;
+  if(waterSurge.active) rise *= 1.5;
+  if(gap > desiredGap) rise += Math.min(0.9, (gap - desiredGap) * 0.006);
+  if(gap < 170 && gap > 55) rise += 0.06;
   waterY -= rise;
   waterSpeed = rise;
 }
-function updateParticles(){ for(let i=particles.length-1;i>=0;i--){ const p=particles[i]; p.x+=p.vx; p.y+=p.vy; p.vy+=0.18; p.life--; if(p.life<=0) particles.splice(i,1);} }
+function updateParticles(){
+  for(let i=particles.length-1;i>=0;i--){
+    const p=particles[i];
+    p.x+=p.vx; p.y+=p.vy; p.vy+=0.18; p.life--;
+    if(p.life<=0){
+      const last=particles.pop();
+      if(i<particles.length) particles[i]=last;
+      releaseParticle(p);
+    }
+  }
+}
 function updateRain(){
   const rainBoost=waterSurge.active?1.6:1;
   for(const r of rain){ r.y+=r.spd*rainBoost; r.x-=0.7+(wind.active?wind.vx*8:0); if(r.y>H){r.y=-10;r.x=Math.random()*W;} if(r.x<0)r.x+=W; if(r.x>W)r.x-=W; }
@@ -1097,106 +1188,88 @@ function drawBox3D(x,y,w,h,depth,top,side,front){
 function shade(hex,amt){ const n=hex.replace('#',''); const num=parseInt(n.length===3?n.split('').map(c=>c+c).join(''):n,16);
   let r=(num>>16)+amt,g=(num>>8&255)+amt,b=(num&255)+amt; r=Math.max(0,Math.min(255,r)); g=Math.max(0,Math.min(255,g)); b=Math.max(0,Math.min(255,b));
   return '#'+((1<<24)|(r<<16)|(g<<8)|b).toString(16).slice(1); }
+/** Crisp walkable top edge so phone players see the landing surface */
+function drawLedgeStrip(sx,y,w,color){
+  ctx.fillStyle=color||'rgba(255,255,255,0.28)';
+  ctx.fillRect(sx, y, w, 2.5);
+  ctx.fillStyle='rgba(30,35,40,0.18)';
+  ctx.fillRect(sx, y+2.5, w, 1.5);
+}
 
 function drawBg(){
-  // Warm overcast Bangkok sky
-  const g=ctx.createLinearGradient(0,0,0,H);
-  g.addColorStop(0,'#6e7d8a');
-  g.addColorStop(0.25,'#87949c');
-  g.addColorStop(0.55,'#9aa6a4');
-  g.addColorStop(0.8,'#8f9a8c');
-  g.addColorStop(1,'#7f8c78');
-  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+  // Cached soft Bangkok sky (rebuild on resize)
+  if(!skyGrad){
+    skyGrad=ctx.createLinearGradient(0,0,0,H);
+    skyGrad.addColorStop(0,'#6e7d8a');
+    skyGrad.addColorStop(0.28,'#87949c');
+    skyGrad.addColorStop(0.55,'#9aa6a4');
+    skyGrad.addColorStop(0.82,'#8f9a8c');
+    skyGrad.addColorStop(1,'#7f8c78');
+  }
+  ctx.fillStyle=skyGrad; ctx.fillRect(0,0,W,H);
 
-  // Soft sun disc behind haze
-  ctx.beginPath(); ctx.arc(W*0.78, H*0.14, 42, 0, Math.PI*2);
-  ctx.fillStyle='rgba(230,215,175,0.22)'; ctx.fill();
-  ctx.beginPath(); ctx.arc(W*0.78, H*0.14, 70, 0, Math.PI*2);
-  ctx.fillStyle='rgba(210,200,170,0.08)'; ctx.fill();
+  // Soft sun disc
+  ctx.beginPath(); ctx.arc(W*0.78, H*0.14, 40, 0, Math.PI*2);
+  ctx.fillStyle='rgba(230,215,175,0.2)'; ctx.fill();
 
-  // Layered clouds
-  for(let i=0;i<7;i++){
-    const drift=(wind.active?frame*0.35:frame*0.08);
-    const cx=((i*175+drift)%(W+260))-130, cy=28+i*22+(i%2)*8;
-    ctx.fillStyle=`rgba(210,214,216,${0.11+(i%3)*0.03})`;
+  // Fewer clouds
+  const nCloud=W<500?4:5;
+  for(let i=0;i<nCloud;i++){
+    const drift=(wind.active?frame*0.28:frame*0.07);
+    const cx=((i*195+drift)%(W+260))-130, cy=30+i*26+(i%2)*6;
+    ctx.fillStyle=`rgba(210,214,216,${0.1+(i%3)*0.025})`;
     ctx.beginPath();
-    ctx.ellipse(cx,cy,100+i*9,22,0,0,Math.PI*2);
-    ctx.ellipse(cx+55,cy+6,72,18,0,0,Math.PI*2);
-    ctx.ellipse(cx-40,cy+4,55,14,0,0,Math.PI*2);
+    ctx.ellipse(cx,cy,90+i*8,18,0,0,Math.PI*2);
+    ctx.ellipse(cx+48,cy+5,60,14,0,0,Math.PI*2);
     ctx.fill();
   }
 
-  // Far city silhouette
+  // Far silhouette (very faint)
   if(citySil && citySil.length){
-    ctx.fillStyle='rgba(55,62,68,0.28)';
+    ctx.fillStyle='rgba(55,62,68,0.22)';
     const base=H*0.58;
     for(const s of citySil){
-      const sx=((s.x - cameraX*0.08)%(W+200));
+      const sx=((s.x - cameraX*0.06)%(W+200));
       ctx.fillRect(sx, base-s.h, s.w, s.h);
-      ctx.fillRect(sx+4, base-s.h-8, 6, 8);
     }
   }
 
-  // Parallax buildings with life
+  // Parallax buildings — far = silhouette only
   for(const d of decorations){
-    const sx=wx(d.x)*0.38+W*0.12, sy=wy(d.y)*0.28+H*0.42;
+    const sx=wx(d.x)*0.36+W*0.12, sy=wy(d.y)*0.26+H*0.42;
     if(sy>H+90||sy+d.h<-60) continue;
     ctx.globalAlpha=d.shade;
-    drawBox3D(sx,sy,d.w,d.h,11,d.top,d.side,d.front);
-    // windows warm glow (muted)
+    drawBox3D(sx,sy,d.w,d.h, d.far?7:10, d.top,d.side,d.front);
+    if(d.far){ ctx.globalAlpha=1; continue; }
     if(d.windows){
-      for(let row=10; row<d.h-14; row+=15){
-        for(let col=7; col<d.w-8; col+=12){
-          const lit=((d.seed+row*3+col)%7)!==0;
-          if(!lit) continue;
-          ctx.fillStyle=((d.seed+row+col)%3===0)?'rgba(210,190,140,0.28)':'rgba(160,175,180,0.16)';
-          ctx.fillRect(sx+col, sy+row, 5, 7);
+      const stepR=18, stepC=14;
+      for(let row=12; row<d.h-16; row+=stepR){
+        for(let col=8; col<d.w-10; col+=stepC){
+          if(((d.seed+row*3+col)%5)===0) continue;
+          ctx.fillStyle=((d.seed+row+col)%3===0)?'rgba(210,190,140,0.22)':'rgba(160,175,180,0.12)';
+          ctx.fillRect(sx+col, sy+row, 4, 6);
         }
       }
     }
-    // balconies
-    if(d.balconies){
-      ctx.fillStyle='rgba(40,45,50,0.35)';
-      for(let row=28; row<d.h-20; row+=36){
-        ctx.fillRect(sx+d.w-2, sy+row, 10, 3);
-        ctx.fillRect(sx+d.w+2, sy+row-8, 2, 8);
-      }
-    }
-    // AC units
     if(d.ac){
-      ctx.fillStyle='#6a7278';
-      ctx.fillRect(sx+d.w*0.7, sy+18, 12, 8);
-      ctx.fillStyle='#4a5258'; ctx.fillRect(sx+d.w*0.7+2, sy+20, 4, 4);
+      ctx.fillStyle='#6a7278'; ctx.fillRect(sx+d.w*0.7, sy+18, 11, 7);
     }
-    // laundry
     if(d.laundry){
-      ctx.strokeStyle='rgba(60,60,58,0.35)'; ctx.lineWidth=1;
+      ctx.strokeStyle='rgba(60,60,58,0.3)'; ctx.lineWidth=1;
       ctx.beginPath(); ctx.moveTo(sx+4, sy+22); ctx.lineTo(sx+d.w-4, sy+18); ctx.stroke();
-      const cols=['#8a6a60','#6a7a8a','#d0c8b0','#7a8a6a'];
-      for(let i=0;i<3;i++){
-        ctx.fillStyle=cols[(d.seed+i)%cols.length];
-        ctx.globalAlpha=d.shade*0.85;
-        ctx.fillRect(sx+10+i*14, sy+18, 8, 12);
-      }
+      ctx.fillStyle='#8a7068'; ctx.fillRect(sx+12, sy+18, 7, 10);
+      ctx.fillStyle='#c8c0a8'; ctx.fillRect(sx+24, sy+17, 7, 10);
     }
-    // roof water tank
     if(d.roofTank){
-      ctx.fillStyle='#6a8088';
-      ctx.fillRect(sx+d.w*0.15, sy-14, 16, 14);
-      ctx.fillStyle='#5a7078'; ctx.beginPath(); ctx.arc(sx+d.w*0.15+8, sy-14, 8, Math.PI, 0); ctx.fill();
+      ctx.fillStyle='#6a858c'; ctx.fillRect(sx+d.w*0.15, sy-12, 14, 12);
     }
-    // antenna
     if(d.antenna){
-      ctx.strokeStyle='rgba(40,40,42,0.5)'; ctx.lineWidth=1.5;
-      ctx.beginPath(); ctx.moveTo(sx+d.w*0.8, sy); ctx.lineTo(sx+d.w*0.8, sy-22); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(sx+d.w*0.8-8, sy-16); ctx.lineTo(sx+d.w*0.8+8, sy-16); ctx.stroke();
+      ctx.strokeStyle='rgba(40,40,42,0.4)'; ctx.lineWidth=1.2;
+      ctx.beginPath(); ctx.moveTo(sx+d.w*0.8, sy); ctx.lineTo(sx+d.w*0.8, sy-18); ctx.stroke();
     }
-    // rooftop plants
     if(d.plants){
       ctx.fillStyle='#5a7a58';
-      ctx.beginPath(); ctx.ellipse(sx+10, sy-2, 7, 5, 0,0,Math.PI*2); ctx.fill();
-      ctx.fillStyle='#4a6a48';
-      ctx.beginPath(); ctx.ellipse(sx+d.w-12, sy-3, 6, 4, 0,0,Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(sx+10, sy-2, 6, 4, 0,0,Math.PI*2); ctx.fill();
     }
     ctx.globalAlpha=1;
   }
@@ -1245,6 +1318,7 @@ function drawSevenElevenFace(sx, y, w, h, d, withPole){
   ctx.fillRect(sx-1, topY-3, w+2, 3);
   ctx.fillStyle='#3a6a42';
   ctx.fillRect(sx-1, topY-1.5, w+2, 1.2);
+  drawLedgeStrip(sx, y, w, 'rgba(255,250,240,0.45)');
   ctx.textBaseline='alphabetic';
 }
 
@@ -1280,6 +1354,7 @@ function drawBTSFace(sx, y, w, h, d, withPole){
       ctx.fillRect(sx+6+i*(w/3.2), wy0, Math.max(8, w*0.18), Math.min(8, y+h-wy0-2));
     }
   }
+  drawLedgeStrip(sx, y, w, 'rgba(220,235,240,0.5)');
   ctx.textBaseline='alphabetic';
 }
 
@@ -1325,6 +1400,7 @@ function drawPadThaiFace(sx, y, w, h, d, withPole){
   // lime wedge
   ctx.fillStyle='#b0c468';
   ctx.beginPath(); ctx.moveTo(cx+pr*0.55, cy+3); ctx.lineTo(cx+pr*0.75, cy+1); ctx.lineTo(cx+pr*0.7, cy+5); ctx.fill();
+  drawLedgeStrip(sx, y, w, 'rgba(255,245,230,0.4)');
   ctx.textBaseline='alphabetic';
 }
 
@@ -1369,6 +1445,7 @@ function drawNoodleStallFace(sx, y, w, h, d, withPole){
     ctx.quadraticCurveTo(bx+3, cy-10, bx-1, cy-16);
     ctx.stroke();
   }
+  drawLedgeStrip(sx, y, w, 'rgba(255,240,230,0.4)');
   ctx.textBaseline='alphabetic';
 }
 
@@ -1401,6 +1478,10 @@ function drawSiamMallFace(sx, y, w, h, d, withPole){
   // entrance arch hint
   ctx.fillStyle='rgba(40,45,50,0.35)';
   ctx.fillRect(sx+w*0.4, topY+fasciaH*0.58, w*0.2, fasciaH*0.4);
+  // Clear mall walkway ledge
+  drawLedgeStrip(sx, y, w, 'rgba(230,235,240,0.55)');
+  ctx.fillStyle='rgba(180,160,110,0.35)';
+  ctx.fillRect(sx+2, y, w-4, 2);
   ctx.textBaseline='alphabetic';
 }
 
@@ -1429,6 +1510,7 @@ function drawMarketFace(sx, y, w, h, d, withPole){
     ctx.fillStyle=cols[i];
     ctx.fillRect(sx+6+i*(w/4.5), topY+fasciaH*0.45, w/5.5, fasciaH*0.35);
   }
+  drawLedgeStrip(sx, y, w, 'rgba(240,235,220,0.4)');
   ctx.textBaseline='alphabetic';
 }
 
@@ -1456,6 +1538,7 @@ function drawTomYumFace(sx, y, w, h, d, withPole){
   // steam
   ctx.strokeStyle='rgba(200,200,195,0.4)'; ctx.lineWidth=1;
   ctx.beginPath(); ctx.moveTo(cx-3, cy-6); ctx.quadraticCurveTo(cx+2, cy-12, cx-2, cy-18); ctx.stroke();
+  drawLedgeStrip(sx, y, w, 'rgba(255,245,230,0.4)');
   ctx.textBaseline='alphabetic';
 }
 
@@ -1476,6 +1559,7 @@ function drawMamaFace(sx, y, w, h, d, withPole){
   ctx.fillText('มาม่า', cx, cy-1);
   ctx.fillStyle='#3a3a38';
   ctx.beginPath(); ctx.ellipse(cx, cy-8, 11, 3, 0,0,Math.PI*2); ctx.fill(); // lid
+  drawLedgeStrip(sx, y, w, 'rgba(255,240,230,0.4)');
   ctx.textBaseline='alphabetic';
 }
 
@@ -1537,7 +1621,7 @@ function drawBTSLandmark(sx, sy){
 
 function drawLandmark(lm){
   const sx=wx(lm.x), sy=wy(lm.baseY); if(sy>H+100||sy<-450) return;
-  ctx.save(); ctx.globalAlpha=0.62;
+  ctx.save(); ctx.globalAlpha = lm.far ? 0.22 : 0.4;
   if(lm.kind==='wat'){
     drawBox3D(sx-22,sy-36,44,36,9,'#b09a70','#6a5c48','#9a8660');
     ctx.fillStyle='#c4a878';
@@ -1808,30 +1892,18 @@ function drawWater(){
   const amp=(surge?7:4.5)+(fast?1.5:0);
   const spd=surge?0.09:(fast?0.07:0.048);
 
-  // subsurface shimmer bands
-  ctx.globalAlpha=0.12;
-  for(let i=0;i<3;i++){
-    ctx.strokeStyle='rgba(200,205,170,0.8)'; ctx.lineWidth=1;
-    ctx.beginPath();
-    for(let x=0;x<=W;x+=8){
-      const wave=Math.sin(x*0.02+frame*spd+i)*3 + sy + 10+i*14;
-      if(x===0) ctx.moveTo(x,wave); else ctx.lineTo(x,wave);
-    }
-    ctx.stroke();
-  }
-  ctx.globalAlpha=1;
-
-  // foam crest
-  ctx.fillStyle=surge?'rgba(215,210,175,0.32)':'rgba(195,200,170,0.22)';
+  // foam crest (single pass — cheaper)
+  ctx.fillStyle=surge?'rgba(215,210,175,0.3)':'rgba(195,200,170,0.2)';
   ctx.beginPath(); ctx.moveTo(0,sy-5);
-  for(let x=0;x<=W;x+=5){ ctx.lineTo(x, sy-5+Math.sin(x*0.028+frame*spd)*amp); }
+  const step=W<500?8:6;
+  for(let x=0;x<=W;x+=step){ ctx.lineTo(x, sy-5+Math.sin(x*0.028+frame*spd)*amp); }
   ctx.lineTo(W,sy+14); ctx.lineTo(0,sy+14); ctx.closePath(); ctx.fill();
 
-  ctx.strokeStyle=surge?'rgba(220,210,160,0.7)':'rgba(200,205,175,0.55)';
-  ctx.lineWidth=fast?2.8:2.2;
+  ctx.strokeStyle=surge?'rgba(220,210,160,0.65)':'rgba(200,205,175,0.5)';
+  ctx.lineWidth=fast?2.6:2.1;
   ctx.beginPath();
-  for(let x=0;x<=W;x+=4){
-    const wave=Math.sin(x*0.025+frame*spd)*amp + Math.sin(x*0.06+frame*0.035)*2.2;
+  for(let x=0;x<=W;x+=step){
+    const wave=Math.sin(x*0.025+frame*spd)*amp + Math.sin(x*0.06+frame*0.035)*2;
     if(x===0) ctx.moveTo(x,sy+wave); else ctx.lineTo(x,sy+wave);
   }
   ctx.stroke();
@@ -1848,7 +1920,8 @@ function drawWater(){
 
   // floating debris variety
   const debris=['board','bottle','bag','crate'];
-  for(let i=0;i<9;i++){
+  const nDeb=W<500?5:7;
+  for(let i=0;i<nDeb;i++){
     const dx=((i*163+frame*(0.25+waterSpeed*0.5))%(W+60))-30;
     const dy=sy+12+Math.sin(frame*0.028+i*1.3)*6 + (i%4)*9;
     if(dy>H) continue;
@@ -1889,25 +1962,24 @@ function drawRain(){
     ctx.stroke();
   }
   // occasional splash spawn at water line
-  if(state===STATE.PLAY && splashes && Math.random()<0.35){
-    splashes.push({x:Math.random()*W, r:1, a:0.35, life:18});
+  if(state===STATE.PLAY && splashes && splashes.length<SPLASH_MAX && Math.random()<0.22){
+    splashes.push({x:Math.random()*W, r:1, a:0.3, life:14});
   }
 }
-function drawWindOverlay(){
-  if(!wind.active) return;
-  ctx.strokeStyle='rgba(225,225,215,0.14)'; ctx.lineWidth=1;
-  for(let i=0;i<14;i++){
-    const yy=((i*68+frame*3.5)%H);
-    const xx=((frame*wind.vx*42 + i*85)%(W+50))-25;
-    ctx.beginPath(); ctx.moveTo(xx,yy); ctx.lineTo(xx+wind.vx*55,yy+5); ctx.stroke();
+function drawParticles(){
+  for(let i=0;i<particles.length;i++){
+    const p=particles[i];
+    ctx.globalAlpha=Math.max(0,p.life/p.max);
+    ctx.fillStyle=p.color;
+    ctx.beginPath(); ctx.arc(wx(p.x),wy(p.y),p.r,0,Math.PI*2); ctx.fill();
   }
+  ctx.globalAlpha=1;
 }
-
-function drawParticles(){ for(const p of particles){ ctx.globalAlpha=Math.max(0,p.life/p.max); ctx.fillStyle=p.color; ctx.beginPath(); ctx.arc(wx(p.x),wy(p.y),p.r,0,Math.PI*2); ctx.fill(); } ctx.globalAlpha=1; }
 function drawWindOverlay(){
   if(!wind.active) return;
   ctx.strokeStyle='rgba(220,220,210,0.12)'; ctx.lineWidth=1;
-  for(let i=0;i<12;i++){
+  const n=W<500?8:10;
+  for(let i=0;i<n;i++){
     const yy=((i*70+frame*3)%H);
     const xx=((frame*wind.vx*40 + i*90)%(W+40))-20;
     ctx.beginPath(); ctx.moveTo(xx,yy); ctx.lineTo(xx+wind.vx*50,yy+4); ctx.stroke();
@@ -1941,9 +2013,9 @@ function loop(){
     const gapPx=waterY-feetY;
     const wGap=Math.max(0, Math.round(gapPx/10));
     let waterHud;
-    if(player.sinking) waterHud='SPLASHED — sinking!';
-    else if(gapPx<=0) waterHud='In the flood!';
-    else waterHud='Water '+wGap+' m below';
+    if(player.sinking) waterHud='จมน้ำ! Sinking…';
+    else if(gapPx<=0) waterHud='น้ำท่วม! In the flood!';
+    else waterHud='น้ำ · Water '+wGap+' m below';
     document.getElementById('hazardWarn').textContent=warnText||waterHud;
   } else if(state===STATE.PAUSE){
     drawBg(); drawWires(); for(const p of platforms) drawPlatform(p); for(const b of birds) drawBird(b); drawPlayer(); drawWater(); drawFog(); drawRain();
