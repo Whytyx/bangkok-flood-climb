@@ -1,11 +1,10 @@
 # Bangkok Flood Climb
 
-Only-Up style endless climb through flooded Bangkok.
+## V1.6
+- **Drown fixed:** water contact → splash SFX, sink animation, then game over (no more floating on surface)
+- HUD water distance matches the visual flood line
+- Redrawn stylish Bangkok-survivor climber (still customizable)
 
-## V1.5
-- **Flood visibly rises** and chases the climber (HUD shows gap)
-- **ป้า (auntie)** throws clothes & noodles mid-climb
-- Stronger **luk thung** procedural BGM (slides, vibrato, khlong beat)
-- Prior hazards kept: birds, wet roofs, sway/move platforms, wind, wires, surge, collapsing signs
+Prior: rising flood chase, ป้า throws, luk thung BGM, birds/wind/wires/wet roofs/collapsing signs.
 
 **Live:** https://whytyx.github.io/bangkok-flood-climb/
