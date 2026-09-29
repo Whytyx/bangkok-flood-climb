@@ -100,7 +100,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#7a8790;font-family:
     <div class="mc-zone" id="mcRight" role="button" aria-label="Right">▶</div>
     <div class="mc-zone" id="mcJump" role="button" aria-label="Jump">⬆</div>
   </div>
-  <div id="watermark">BANGKOK FLOOD CLIMB V1.6.3</div>
+  <div id="watermark">BANGKOK FLOOD CLIMB V1.6.4</div>
 </div>
 <script>
 (function(){
@@ -471,7 +471,7 @@ const PLATFORM_TYPES=[
   {name:'boat',w:[95,125],h:14,top:'#7a8a90',side:'#4a5a62',front:'#5a6a72'},
   {name:'crane',w:[58,90],h:14,top:'#c9a050',side:'#7a6028',front:'#b08940'},
 ];
-const SIGN_TEXTS=['SOMBAT','7-11','PAD THAI','BTS','ตลาด','ก๋วยเตี๋ยว','SIAM','TOM YUM'];
+const SIGN_TEXTS=['7-11','7-11','BTS','BTS','PAD THAI','ตลาด','ก๋วยเตี๋ยว','SIAM','TOM YUM','SOMBAT','7-11','BTS'];
 
 function rand(a,b){return a+Math.random()*(b-a);}
 function randi(a,b){return Math.floor(rand(a,b+1));}
@@ -517,10 +517,16 @@ function assignHazards(p, index, heightApprox){
 
 function makePlatform(x,y,type,index){
   const t=type||pick(PLATFORM_TYPES);
-  const w=rand(t.w[0],t.w[1]);
+  let w=rand(t.w[0],t.w[1]);
+  let label=null;
+  if(t.name==='sign'||t.name==='billboard'){
+    label=pick(SIGN_TEXTS);
+    // Wider walkable fascia so 7-Eleven / BTS read clearly
+    if(label==='7-11') w=Math.max(w, t.name==='billboard'?150:110);
+    if(label==='BTS') w=Math.max(w, t.name==='billboard'?160:120);
+  }
   const p={ x:x-w/2,y,w,h:t.h,type:t.name, top:t.top,side:t.side,front:t.front,
-    label:(t.name==='sign'||t.name==='billboard')?pick(SIGN_TEXTS):null,
-    checkpoint:false, depth:DEPTH+(t.name==='pillar'?4:0) };
+    label, checkpoint:false, depth:DEPTH+(t.name==='pillar'?4:0) };
   return assignHazards(p, index||0, -y);
 }
 
@@ -601,8 +607,11 @@ function makeDecorations(){
   landmarks=[
     {kind:'wat',x:-180,baseY:-420},
     {kind:'bts',x:220,baseY:-960},
+    {kind:'seven',x:-90,baseY:-1280},
     {kind:'tower',x:80,baseY:-1720},
-    {kind:'wat',x:300,baseY:-2400}
+    {kind:'bts',x:-250,baseY:-2100},
+    {kind:'wat',x:300,baseY:-2400},
+    {kind:'seven',x:160,baseY:-2900}
   ];
 }
 function makeRain(){
@@ -1176,6 +1185,144 @@ function drawBg(){
     ctx.globalAlpha=1;
   }
 }
+
+/** Soft homage 7-Eleven fascia — recognizable orange/green/red stripes */
+function drawSevenElevenFace(sx, y, w, h, d, withPole){
+  const fasciaH = Math.max(22, 16+h);
+  const topY = y - (fasciaH - h);
+  if(withPole) drawBox3D(sx+w/2-3, y+h, 6, 18, 5, '#8a8e92', '#555a60', '#6a6e72');
+  // cream storefront body (walkable top still at y)
+  drawBox3D(sx, topY, w, fasciaH, d, '#e8e4d8', '#8a8578', '#f0ece0');
+  // classic stripe band near top of fascia
+  const bandY = topY + 3;
+  const bandH = Math.max(7, Math.min(11, fasciaH*0.32));
+  ctx.fillStyle='#d4782a'; // orange (muted)
+  ctx.fillRect(sx+2, bandY, w-4, bandH);
+  ctx.fillStyle='#3d7a48'; // green
+  ctx.fillRect(sx+2, bandY+bandH*0.38, w-4, bandH*0.34);
+  ctx.fillStyle='#b84848'; // red
+  ctx.fillRect(sx+2, bandY+bandH*0.72, w-4, bandH*0.28);
+  // wordmark panel
+  ctx.fillStyle='rgba(255,255,255,0.92)';
+  const pw=Math.min(w-10, 72), ph=Math.max(10, bandH-1);
+  const px=sx+w/2-pw/2, py=bandY+1;
+  ctx.fillRect(px, py, pw, ph);
+  // stylized 7-Eleven text
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.font=`bold ${Math.max(8, Math.min(13, pw*0.18))}px sans-serif`;
+  ctx.fillStyle='#c45a28';
+  ctx.fillText('7-Eleven', sx+w/2, py+ph/2);
+  // small green/red accent under mark
+  ctx.fillStyle='#3d7a48'; ctx.fillRect(px+2, py+ph-2, pw*0.45, 1.5);
+  ctx.fillStyle='#b84848'; ctx.fillRect(px+pw*0.5, py+ph-2, pw*0.45, 1.5);
+  // glass windows + door
+  const winY = bandY + bandH + 3;
+  if(winY + 8 < y + h){
+    ctx.fillStyle='rgba(140,165,175,0.35)';
+    ctx.fillRect(sx+5, winY, w*0.28, Math.min(10, y+h-winY-2));
+    ctx.fillRect(sx+w*0.38, winY, w*0.22, Math.min(10, y+h-winY-2));
+    ctx.fillStyle='rgba(90,100,110,0.4)';
+    ctx.fillRect(sx+w*0.68, winY, w*0.22, Math.min(11, y+h-winY-1));
+  }
+  // soft awning lip
+  ctx.fillStyle='#c46830';
+  ctx.fillRect(sx-1, topY-3, w+2, 3);
+  ctx.fillStyle='#3a6a42';
+  ctx.fillRect(sx-1, topY-1.5, w+2, 1.2);
+  ctx.textBaseline='alphabetic';
+}
+
+/** Soft homage BTS skytrain station / sign */
+function drawBTSFace(sx, y, w, h, d, withPole){
+  const fasciaH = Math.max(24, 16+h);
+  const topY = y - (fasciaH - h);
+  if(withPole) drawBox3D(sx+w/2-3, y+h, 6, 18, 5, '#7a9098', '#4a6068', '#5a7880');
+  // teal station body
+  drawBox3D(sx, topY, w, fasciaH, d, '#c8d8dc', '#4a6a72', '#6a9aa4');
+  // teal fascia band
+  ctx.fillStyle='#3d8a96';
+  ctx.fillRect(sx+2, topY+2, w-4, Math.max(12, fasciaH*0.42));
+  // white BTS mark
+  ctx.fillStyle='rgba(255,255,255,0.95)';
+  const bw=Math.min(w-12, 48), bh=Math.max(9, fasciaH*0.28);
+  const bx=sx+w/2-bw/2, by=topY+4;
+  ctx.fillRect(bx, by, bw, bh);
+  ctx.fillStyle='#2a6a74';
+  ctx.font=`bold ${Math.max(8, Math.min(12, bw*0.28))}px sans-serif`;
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText('BTS', sx+w/2, by+bh/2);
+  // canopy lip
+  ctx.fillStyle='#5aa0a8';
+  ctx.fillRect(sx-3, topY-4, w+6, 4);
+  ctx.fillStyle='rgba(255,255,255,0.25)';
+  ctx.fillRect(sx-3, topY-4, w+6, 1.5);
+  // platform windows / doors hint
+  const wy0 = topY + Math.max(14, fasciaH*0.48);
+  if(wy0 < y+h-2){
+    ctx.fillStyle='rgba(200,220,225,0.4)';
+    for(let i=0;i<3;i++){
+      ctx.fillRect(sx+6+i*(w/3.2), wy0, Math.max(8, w*0.18), Math.min(8, y+h-wy0-2));
+    }
+  }
+  ctx.textBaseline='alphabetic';
+}
+
+function drawSevenLandmark(sx, sy){
+  // mini 7-Eleven building in background
+  const w=70, h=56;
+  drawBox3D(sx-w/2, sy-h, w, h, 10, '#e8e4d8', '#8a8578', '#f0ece0');
+  // stripes
+  ctx.fillStyle='#d4782a'; ctx.fillRect(sx-w/2+3, sy-h+6, w-6, 10);
+  ctx.fillStyle='#3d7a48'; ctx.fillRect(sx-w/2+3, sy-h+10, w-6, 4);
+  ctx.fillStyle='#b84848'; ctx.fillRect(sx-w/2+3, sy-h+14, w-6, 3);
+  ctx.fillStyle='rgba(255,255,255,0.92)'; ctx.fillRect(sx-22, sy-h+7, 44, 10);
+  ctx.fillStyle='#c45a28'; ctx.font='bold 9px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText('7-Eleven', sx, sy-h+12);
+  // windows
+  ctx.fillStyle='rgba(140,165,175,0.35)';
+  ctx.fillRect(sx-w/2+8, sy-h+24, 18, 14);
+  ctx.fillRect(sx-2, sy-h+24, 18, 14);
+  ctx.fillStyle='rgba(90,100,110,0.4)';
+  ctx.fillRect(sx+w/2-20, sy-h+24, 12, 18);
+}
+
+function drawBTSLandmark(sx, sy){
+  // elevated BTS: pillars + teal station + train
+  const pillarH=190;
+  // twin pillars
+  drawBox3D(sx-48, sy-pillarH, 14, pillarH, 8, '#c0d0d4', '#5a7078', '#8aa0a8');
+  drawBox3D(sx+34, sy-pillarH, 14, pillarH, 8, '#c0d0d4', '#5a7078', '#8aa0a8');
+  // elevated deck
+  drawBox3D(sx-70, sy-pillarH-14, 140, 14, 10, '#d0dce0', '#4a6870', '#7a9aa4');
+  // teal fascia / canopy
+  ctx.fillStyle='#3d8a96';
+  ctx.fillRect(sx-68, sy-pillarH-28, 136, 14);
+  ctx.fillStyle='#5aa0a8';
+  ctx.fillRect(sx-72, sy-pillarH-32, 144, 5);
+  // BTS badge
+  ctx.fillStyle='rgba(255,255,255,0.95)';
+  ctx.fillRect(sx-18, sy-pillarH-26, 36, 10);
+  ctx.fillStyle='#2a6a74';
+  ctx.font='bold 9px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText('BTS', sx, sy-pillarH-21);
+  // skytrain car (teal)
+  const tx=sx-50+Math.sin(frame*0.012)*40;
+  const ty=sy-pillarH-12;
+  ctx.fillStyle='#5a9aa4';
+  roundRectPath(ctx, tx, ty-11, 52, 12, 3); ctx.fill();
+  ctx.fillStyle='#3d7a84';
+  ctx.fillRect(tx+2, ty-9, 48, 3);
+  // windows
+  ctx.fillStyle='rgba(220,235,240,0.55)';
+  for(let i=0;i<4;i++) ctx.fillRect(tx+4+i*12, ty-7, 8, 5);
+  // doors
+  ctx.fillStyle='rgba(40,70,80,0.35)';
+  ctx.fillRect(tx+22, ty-8, 6, 8);
+  // headlights
+  ctx.fillStyle='rgba(240,230,180,0.5)';
+  ctx.fillRect(tx+48, ty-6, 3, 3);
+}
+
 function drawLandmark(lm){
   const sx=wx(lm.x), sy=wy(lm.baseY); if(sy>H+100||sy<-450) return;
   ctx.save(); ctx.globalAlpha=0.62;
@@ -1188,12 +1335,9 @@ function drawLandmark(lm){
     // tip
     ctx.fillStyle='rgba(220,200,150,0.7)'; ctx.beginPath(); ctx.arc(sx,sy-188,3,0,Math.PI*2); ctx.fill();
   } else if(lm.kind==='bts'){
-    drawBox3D(sx-9,sy-200,18,200,9,'#b0b6bc','#606870','#7a848c');
-    drawBox3D(sx-60,sy-212,120,16,9,'#a8aeb4','#5c646c','#788088');
-    // train car hint
-    ctx.fillStyle='rgba(180,100,90,0.45)';
-    const tx=sx-40+Math.sin(frame*0.01)*30;
-    ctx.fillRect(tx, sy-208, 36, 10);
+    drawBTSLandmark(sx, sy);
+  } else if(lm.kind==='seven'){
+    drawSevenLandmark(sx, sy);
   } else {
     drawBox3D(sx-14,sy-250,28,250,10,'#9098a0','#505860','#6a747c');
     ctx.fillStyle='rgba(180,170,150,0.35)'; ctx.fillRect(sx-8, sy-258, 16, 8);
@@ -1264,14 +1408,21 @@ function drawPlatform(p){
     ctx.fillStyle='rgba(40,40,42,0.25)';
     for(let i=0;i<3;i++){ ctx.beginPath(); ctx.arc(sx+8+i*(p.w/3), y+6, 1.5, 0, Math.PI*2); ctx.fill(); }
   } else if(p.type==='sign'||p.type==='billboard'){
-    if(!p.falling) drawBox3D(sx+p.w/2-3,y+p.h,6,20,5,'#8a8e92','#555a60','#6a6e72');
-    drawBox3D(sx,y-18,p.w,18+p.h,d,top,side,front);
-    // faded poster
-    ctx.fillStyle='rgba(160,150,130,0.2)'; ctx.fillRect(sx+4, y-14, p.w-8, 12);
-    if(p.label){
-      ctx.fillStyle='rgba(235,225,200,0.65)';
-      ctx.font=`bold ${p.type==='billboard'?12:10}px sans-serif`;
-      ctx.textAlign='center'; ctx.fillText(p.label,sx+p.w/2,y-3);
+    const withPole = !p.falling;
+    if(p.label==='7-11'){
+      drawSevenElevenFace(sx, y, p.w, p.h, d, withPole);
+    } else if(p.label==='BTS'){
+      drawBTSFace(sx, y, p.w, p.h, d, withPole);
+    } else {
+      if(withPole) drawBox3D(sx+p.w/2-3,y+p.h,6,20,5,'#8a8e92','#555a60','#6a6e72');
+      drawBox3D(sx,y-18,p.w,18+p.h,d,top,side,front);
+      ctx.fillStyle='rgba(160,150,130,0.22)'; ctx.fillRect(sx+4, y-14, p.w-8, 12);
+      if(p.label){
+        ctx.fillStyle='rgba(235,225,200,0.7)';
+        ctx.font=`bold ${p.type==='billboard'?12:10}px sans-serif`;
+        ctx.textAlign='center'; ctx.textBaseline='alphabetic';
+        ctx.fillText(p.label,sx+p.w/2,y-3);
+      }
     }
     if(p.collapse && standingPlat===p && standTime>p.collapseMax*0.5){
       ctx.strokeStyle='rgba(80,60,50,0.55)'; ctx.lineWidth=1.2;
