@@ -100,7 +100,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#7a8790;font-family:
     <div class="mc-zone" id="mcRight" role="button" aria-label="Right">▶</div>
     <div class="mc-zone" id="mcJump" role="button" aria-label="Jump">⬆</div>
   </div>
-  <div id="watermark">BANGKOK FLOOD CLIMB V1.6.5</div>
+  <div id="watermark">BANGKOK FLOOD CLIMB V1.6.6</div>
 </div>
 <script>
 (function(){
@@ -474,7 +474,7 @@ const PLATFORM_TYPES=[
   {name:'bts',w:[140,200],h:16,top:'#c8d8dc',side:'#4a6a72',front:'#6a9aa4'},
 ];
 const BTS_TYPE = PLATFORM_TYPES[PLATFORM_TYPES.length-1];
-const SIGN_TEXTS=['7-11','7-11','7-11','PAD THAI','ตลาด','ก๋วยเตี๋ยว','SIAM','TOM YUM','SOMBAT','PAD THAI'];
+const SIGN_TEXTS=['7-11','7-11','7-11','PAD THAI','PAD THAI','ก๋วยเตี๋ยว','ก๋วยเตี๋ยว','SIAM','SIAM','ตลาด','ต้มยำ','มาม่า'];
 
 function rand(a,b){return a+Math.random()*(b-a);}
 function randi(a,b){return Math.floor(rand(a,b+1));}
@@ -532,6 +532,9 @@ function makePlatform(x,y,type,index){
   } else if(t.name==='sign'||t.name==='billboard'){
     label=pick(SIGN_TEXTS);
     if(label==='7-11') w=Math.max(w, t.name==='billboard'?150:110);
+    else if(label==='SIAM') w=Math.max(w, t.name==='billboard'?180:140);
+    else if(label==='ก๋วยเตี๋ยว'||label==='PAD THAI') w=Math.max(w, t.name==='billboard'?140:115);
+    else if(label==='ตลาด'||label==='ต้มยำ'||label==='มาม่า') w=Math.max(w, 100);
   }
   const p={ x:x-w/2,y,w,h:t.h,type:t.name, top:t.top,side:t.side,front:t.front,
     label, checkpoint:false, depth:DEPTH+(t.name==='pillar'?4:0)+(t.name==='bts'?2:0) };
@@ -1280,6 +1283,202 @@ function drawBTSFace(sx, y, w, h, d, withPole){
   ctx.textBaseline='alphabetic';
 }
 
+
+/** Pad Thai plate menu / sign — noodles, egg, shrimp, bean sprouts */
+function drawPadThaiFace(sx, y, w, h, d, withPole){
+  const fasciaH = Math.max(28, 18+h);
+  const topY = y - (fasciaH - h);
+  if(withPole) drawBox3D(sx+w/2-3, y+h, 6, 16, 5, '#8a8e92', '#555a60', '#6a6e72');
+  drawBox3D(sx, topY, w, fasciaH, d, '#e8dcc8', '#7a6a58', '#f0e6d4');
+  // warm menu header
+  ctx.fillStyle='#8a5040';
+  ctx.fillRect(sx+2, topY+2, w-4, 9);
+  ctx.fillStyle='#f0e0c8';
+  ctx.font='bold 8px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText('ผัดไทย', sx+w/2, topY+6.5);
+  // plate
+  const cx=sx+w/2, cy=topY+fasciaH*0.58;
+  const pr=Math.min(w*0.28, 18);
+  ctx.fillStyle='#e8e4dc';
+  ctx.beginPath(); ctx.ellipse(cx, cy+2, pr+2, pr*0.45, 0,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#f5f0e8';
+  ctx.beginPath(); ctx.ellipse(cx, cy, pr, pr*0.4, 0,0,Math.PI*2); ctx.fill();
+  // noodles swirls
+  ctx.strokeStyle='#c4a060'; ctx.lineWidth=1.4;
+  for(let i=0;i<4;i++){
+    ctx.beginPath();
+    ctx.ellipse(cx-2+i*1.5, cy-1+i*0.5, pr*0.55-i*1.5, pr*0.18, -0.2+i*0.1, 0.2, Math.PI*1.6);
+    ctx.stroke();
+  }
+  // egg
+  ctx.fillStyle='#e8d070';
+  ctx.beginPath(); ctx.ellipse(cx+pr*0.35, cy-2, 5, 3.5, 0.3, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle='#f0e8a0';
+  ctx.beginPath(); ctx.arc(cx+pr*0.35, cy-2, 2, 0, Math.PI*2); ctx.fill();
+  // shrimp
+  ctx.fillStyle='#d47868';
+  ctx.beginPath(); ctx.ellipse(cx-pr*0.4, cy+1, 4.5, 2.8, -0.5, 0, Math.PI*2); ctx.fill();
+  // bean sprouts / green
+  ctx.strokeStyle='#8aaa70'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(cx-4, cy+3); ctx.lineTo(cx-1, cy-2); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cx+2, cy+4); ctx.lineTo(cx+5, cy); ctx.stroke();
+  // lime wedge
+  ctx.fillStyle='#b0c468';
+  ctx.beginPath(); ctx.moveTo(cx+pr*0.55, cy+3); ctx.lineTo(cx+pr*0.75, cy+1); ctx.lineTo(cx+pr*0.7, cy+5); ctx.fill();
+  ctx.textBaseline='alphabetic';
+}
+
+/** ก๋วยเตี๋ยว street noodle stall */
+function drawNoodleStallFace(sx, y, w, h, d, withPole){
+  const fasciaH = Math.max(30, 18+h);
+  const topY = y - (fasciaH - h);
+  if(withPole) drawBox3D(sx+w/2-3, y+h, 6, 16, 5, '#8a7058', '#5a4838', '#6a5848');
+  // stall body wood/cream
+  drawBox3D(sx, topY, w, fasciaH, d, '#d4c4a8', '#6a5a48', '#e0d4bc');
+  // striped awning
+  const awH=10;
+  for(let i=0;i<Math.ceil(w/10);i++){
+    ctx.fillStyle = i%2===0 ? '#c45040' : '#e8e0d0';
+    ctx.fillRect(sx-2+i*10, topY-awH, 10, awH);
+  }
+  ctx.fillStyle='#8a4038';
+  ctx.fillRect(sx-3, topY-awH-2, w+6, 3);
+  // shop name board
+  ctx.fillStyle='#5a4038';
+  ctx.fillRect(sx+4, topY+2, w-8, 8);
+  ctx.fillStyle='#f0e0c0';
+  ctx.font='bold 8px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText('ก๋วยเตี๋ยว', sx+w/2, topY+6);
+  // pots / bowls on counter
+  const cy=topY+fasciaH*0.62;
+  for(let i=0;i<3;i++){
+    const bx=sx+12+i*(w/3.5);
+    ctx.fillStyle='#6a7078';
+    ctx.beginPath(); ctx.ellipse(bx, cy+4, 7, 3, 0,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#8a9098';
+    ctx.beginPath(); ctx.ellipse(bx, cy, 7, 3.5, 0,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#c4a878';
+    ctx.beginPath(); ctx.ellipse(bx, cy-1, 5, 2, 0,0,Math.PI*2); ctx.fill();
+  }
+  // steam
+  ctx.strokeStyle='rgba(200,205,200,0.45)'; ctx.lineWidth=1.2;
+  for(let i=0;i<3;i++){
+    const bx=sx+12+i*(w/3.5);
+    ctx.beginPath();
+    ctx.moveTo(bx-2, cy-4);
+    ctx.quadraticCurveTo(bx+3, cy-10, bx-1, cy-16);
+    ctx.stroke();
+  }
+  ctx.textBaseline='alphabetic';
+}
+
+/** Siam Paragon–ish mall facade (muted) */
+function drawSiamMallFace(sx, y, w, h, d, withPole){
+  const fasciaH = Math.max(32, 20+h);
+  const topY = y - (fasciaH - h);
+  // modern glass/stone mall body — walkable top at y
+  drawBox3D(sx, topY, w, fasciaH, d+2, '#d8dce0', '#6a7278', '#c8d0d6');
+  // dark stone base strip
+  ctx.fillStyle='#5a6268';
+  ctx.fillRect(sx+2, topY+fasciaH*0.55, w-4, fasciaH*0.45-2);
+  // glass curtain windows
+  ctx.fillStyle='rgba(140,165,180,0.4)';
+  for(let row=0; row<2; row++){
+    for(let col=0; col<4; col++){
+      ctx.fillRect(sx+6+col*((w-12)/4), topY+6+row*10, (w-12)/4-3, 8);
+    }
+  }
+  // marquee
+  ctx.fillStyle='#4a545c';
+  ctx.fillRect(sx+w*0.12, topY-8, w*0.76, 12);
+  ctx.fillStyle='rgba(220,215,200,0.9)';
+  ctx.font=`bold ${Math.max(9, Math.min(14, w*0.08))}px sans-serif`;
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText('SIAM', sx+w/2, topY-2);
+  // soft gold accent line (Paragon vibe, muted)
+  ctx.fillStyle='rgba(180,160,110,0.55)';
+  ctx.fillRect(sx+w*0.12, topY+3, w*0.76, 1.5);
+  // entrance arch hint
+  ctx.fillStyle='rgba(40,45,50,0.35)';
+  ctx.fillRect(sx+w*0.4, topY+fasciaH*0.58, w*0.2, fasciaH*0.4);
+  ctx.textBaseline='alphabetic';
+}
+
+/** ตลาด wet market stall */
+function drawMarketFace(sx, y, w, h, d, withPole){
+  const fasciaH = Math.max(28, 18+h);
+  const topY = y - (fasciaH - h);
+  if(withPole) drawBox3D(sx+w/2-3, y+h, 6, 16, 5, '#8a8e92', '#555a60', '#6a6e72');
+  drawBox3D(sx, topY, w, fasciaH, d, '#c8b898', '#6a5a48', '#d8c8a8');
+  // blue tarp awning (common Bangkok market)
+  ctx.fillStyle='#4a7a9a';
+  ctx.beginPath();
+  ctx.moveTo(sx-3, topY);
+  ctx.lineTo(sx+w+3, topY);
+  ctx.lineTo(sx+w+1, topY-9);
+  ctx.lineTo(sx-1, topY-9);
+  ctx.closePath(); ctx.fill();
+  ctx.fillStyle='#3a6a88';
+  ctx.fillRect(sx-2, topY-10, w+4, 2);
+  ctx.fillStyle='#f0e8d0';
+  ctx.font='bold 8px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText('ตลาด', sx+w/2, topY-5);
+  // crates of produce
+  const cols=['#c46850','#d4a050','#6a9a58','#e8e0c8'];
+  for(let i=0;i<4;i++){
+    ctx.fillStyle=cols[i];
+    ctx.fillRect(sx+6+i*(w/4.5), topY+fasciaH*0.45, w/5.5, fasciaH*0.35);
+  }
+  ctx.textBaseline='alphabetic';
+}
+
+/** ต้มยำ bowl */
+function drawTomYumFace(sx, y, w, h, d, withPole){
+  const fasciaH = Math.max(28, 18+h);
+  const topY = y - (fasciaH - h);
+  if(withPole) drawBox3D(sx+w/2-3, y+h, 6, 16, 5, '#8a8e92', '#555a60', '#6a6e72');
+  drawBox3D(sx, topY, w, fasciaH, d, '#e8d8c8', '#7a6558', '#f0e4d4');
+  ctx.fillStyle='#8a4038';
+  ctx.fillRect(sx+2, topY+2, w-4, 8);
+  ctx.fillStyle='#f0d8c0';
+  ctx.font='bold 8px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText('ต้มยำ', sx+w/2, topY+6);
+  const cx=sx+w/2, cy=topY+fasciaH*0.6, r=Math.min(14, w*0.22);
+  // bowl
+  ctx.fillStyle='#e8e4dc';
+  ctx.beginPath(); ctx.moveTo(cx-r, cy-2); ctx.lineTo(cx+r, cy-2); ctx.lineTo(cx+r*0.75, cy+r*0.7); ctx.lineTo(cx-r*0.75, cy+r*0.7); ctx.closePath(); ctx.fill();
+  ctx.fillStyle='#d47840';
+  ctx.beginPath(); ctx.ellipse(cx, cy, r*0.85, r*0.35, 0,0,Math.PI*2); ctx.fill();
+  // herbs / chili
+  ctx.fillStyle='#5a8a48'; ctx.beginPath(); ctx.ellipse(cx-4, cy-1, 3, 2, 0,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#c45040'; ctx.beginPath(); ctx.arc(cx+5, cy, 2, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle='#e8e0d0'; ctx.beginPath(); ctx.ellipse(cx, cy+2, 4, 2, 0,0,Math.PI*2); ctx.fill(); // lemongrass hint
+  // steam
+  ctx.strokeStyle='rgba(200,200,195,0.4)'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(cx-3, cy-6); ctx.quadraticCurveTo(cx+2, cy-12, cx-2, cy-18); ctx.stroke();
+  ctx.textBaseline='alphabetic';
+}
+
+/** มาม่า cup noodles */
+function drawMamaFace(sx, y, w, h, d, withPole){
+  const fasciaH = Math.max(26, 16+h);
+  const topY = y - (fasciaH - h);
+  if(withPole) drawBox3D(sx+w/2-3, y+h, 6, 16, 5, '#8a8e92', '#555a60', '#6a6e72');
+  drawBox3D(sx, topY, w, fasciaH, d, '#e8e0d0', '#6a6058', '#f0e8dc');
+  // cup
+  const cx=sx+w/2, cy=topY+fasciaH*0.55;
+  ctx.fillStyle='#c45a38';
+  ctx.beginPath(); ctx.moveTo(cx-10, cy-8); ctx.lineTo(cx+10, cy-8); ctx.lineTo(cx+8, cy+10); ctx.lineTo(cx-8, cy+10); ctx.closePath(); ctx.fill();
+  ctx.fillStyle='#e8e0d0';
+  ctx.fillRect(cx-9, cy-4, 18, 6);
+  ctx.fillStyle='#c45a38';
+  ctx.font='bold 7px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText('มาม่า', cx, cy-1);
+  ctx.fillStyle='#3a3a38';
+  ctx.beginPath(); ctx.ellipse(cx, cy-8, 11, 3, 0,0,Math.PI*2); ctx.fill(); // lid
+  ctx.textBaseline='alphabetic';
+}
+
 function drawSevenLandmark(sx, sy){
   // mini 7-Eleven building in background
   const w=70, h=56;
@@ -1478,18 +1677,21 @@ function drawPlatform(p){
     for(let i=0;i<3;i++){ ctx.beginPath(); ctx.arc(sx+8+i*(p.w/3), y+6, 1.5, 0, Math.PI*2); ctx.fill(); }
   } else if(p.type==='sign'||p.type==='billboard'){
     const withPole = !p.falling;
-    if(p.label==='7-11'){
-      drawSevenElevenFace(sx, y, p.w, p.h, d, withPole);
-    } else if(p.label==='BTS'){
-      drawBTSFace(sx, y, p.w, p.h, d, withPole);
-    } else {
+    if(p.label==='7-11') drawSevenElevenFace(sx, y, p.w, p.h, d, withPole);
+    else if(p.label==='BTS') drawBTSFace(sx, y, p.w, p.h, d, withPole);
+    else if(p.label==='PAD THAI') drawPadThaiFace(sx, y, p.w, p.h, d, withPole);
+    else if(p.label==='ก๋วยเตี๋ยว') drawNoodleStallFace(sx, y, p.w, p.h, d, withPole);
+    else if(p.label==='SIAM') drawSiamMallFace(sx, y, p.w, p.h, d, withPole);
+    else if(p.label==='ตลาด') drawMarketFace(sx, y, p.w, p.h, d, withPole);
+    else if(p.label==='ต้มยำ' || p.label==='TOM YUM') drawTomYumFace(sx, y, p.w, p.h, d, withPole);
+    else if(p.label==='มาม่า') drawMamaFace(sx, y, p.w, p.h, d, withPole);
+    else {
+      // fallback street poster (should rarely hit)
       if(withPole) drawBox3D(sx+p.w/2-3,y+p.h,6,20,5,'#8a8e92','#555a60','#6a6e72');
       drawBox3D(sx,y-18,p.w,18+p.h,d,top,side,front);
-      ctx.fillStyle='rgba(160,150,130,0.22)'; ctx.fillRect(sx+4, y-14, p.w-8, 12);
       if(p.label){
         ctx.fillStyle='rgba(235,225,200,0.7)';
-        ctx.font=`bold ${p.type==='billboard'?12:10}px sans-serif`;
-        ctx.textAlign='center'; ctx.textBaseline='alphabetic';
+        ctx.font=`bold 10px sans-serif`; ctx.textAlign='center';
         ctx.fillText(p.label,sx+p.w/2,y-3);
       }
     }
