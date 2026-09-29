@@ -1,14 +1,13 @@
 # Bangkok Flood Climb
 
-## V1.7.0 — Quality & stability
-- Particle / splash / rain caps + object pooling (fewer frame spikes)
-- Cached sky gradient; lighter water & background drawing
-- Touch controls: pointer-only (no double-fire jump)
-- Fairer platform spacing; land on highest deck; solid 7‑11 / SIAM / BTS don’t collapse
-- Hazard telegraph (wind / flood warnings); gentler flood chase
-- Clearer walkable ledge strips on themed signs; far bg more faded
-- Bilingual Thai/EN HUD warnings; coyote frames +10
+## V1.7.1 — Jump rocket fix
+- Jump is edge-triggered (`jumpLocked` until release) — no sticky re-jump
+- Clamp vx/vy; cap moving-platform carry delta (stale `_lx` teleport)
+- Softer wind while airborne; knockback clamped
+- Clear input on blur / visibilitychange / pointercancel
+- Tighter landing snap (no far deck teleport)
 
-Prior: themed Bangkok signs (V1.6.6), climbable BTS, 7‑Eleven façades, luk thung BGM, auntie throws.
+## V1.7.0 — Quality & stability
+Pools, fair collision, telegraph hazards, themed signs, climbable BTS.
 
 **Live:** https://whytyx.github.io/bangkok-flood-climb/

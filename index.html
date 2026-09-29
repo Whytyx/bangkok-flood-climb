@@ -100,7 +100,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#7a8790;font-family:
     <div class="mc-zone" id="mcRight" role="button" aria-label="Right">▶</div>
     <div class="mc-zone" id="mcJump" role="button" aria-label="Jump">⬆</div>
   </div>
-  <div id="watermark">BANGKOK FLOOD CLIMB V1.7.0</div>
+  <div id="watermark">BANGKOK FLOOD CLIMB V1.7.1</div>
 </div>
 <script>
 (function(){
@@ -285,8 +285,29 @@ function drawPreviews(){
 const keysDown=Object.create(null);
 const input={left:false,right:false,jumpHeld:false,jumpPressed:false};
 let jumpBuffer=0;
-function pressJump(){ input.jumpHeld=true; input.jumpPressed=true; jumpBuffer=14; }
-function releaseJump(){ input.jumpHeld=false; }
+/** After a jump fires, ignore further jump presses until release (stops sticky/rocket re-jump) */
+let jumpLocked=false;
+function clearAllInput(){
+  Object.keys(keysDown).forEach(k=>keysDown[k]=false);
+  input.left=false; input.right=false; input.jumpHeld=false; input.jumpPressed=false;
+  jumpBuffer=0; jumpLocked=false;
+  ['mcLeft','mcRight','mcJump'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.classList.remove('active');
+  });
+}
+function pressJump(){
+  input.jumpHeld=true;
+  // Edge only: do not re-arm buffer while finger/key still held after a jump
+  if(jumpLocked) return;
+  input.jumpPressed=true;
+  jumpBuffer=10;
+}
+function releaseJump(){
+  input.jumpHeld=false;
+  input.jumpPressed=false;
+  jumpLocked=false;
+}
 window.addEventListener('keydown',e=>{
   if(keysDown[e.code]){ if(['Space','ArrowUp','KeyW'].includes(e.code)) e.preventDefault(); return; }
   keysDown[e.code]=true;
@@ -302,7 +323,9 @@ window.addEventListener('keyup',e=>{
   if(e.code==='ArrowRight'||e.code==='KeyD') input.right=false;
   if(e.code==='Space'||e.code==='ArrowUp'||e.code==='KeyW') releaseJump();
 });
-window.addEventListener('blur',()=>{ Object.keys(keysDown).forEach(k=>keysDown[k]=false); input.left=input.right=input.jumpHeld=false; });
+window.addEventListener('blur', clearAllInput);
+document.addEventListener('visibilitychange',()=>{ if(document.hidden) clearAllInput(); });
+window.addEventListener('pagehide', clearAllInput);
 function isMobile(){ return ('ontouchstart' in window)||navigator.maxTouchPoints>0||W<820; }
 const mc=document.getElementById('mobileControls');
 function bindHold(el,onP,onR){
@@ -319,21 +342,28 @@ function bindHold(el,onP,onR){
     if(!held) return;
     held=false;
     if(e&&e.preventDefault){ e.preventDefault(); e.stopPropagation(); }
+    try{ if(e&&e.pointerId!=null) el.releasePointerCapture(e.pointerId); }catch(_){}
     el.classList.remove('active'); onR();
   };
   el.addEventListener('pointerdown',down);
   el.addEventListener('pointerup',up);
   el.addEventListener('pointercancel',up);
-  el.addEventListener('lostpointercapture',()=>{ if(held) up(null); });
+  el.addEventListener('lostpointercapture',()=>{ if(held){ held=false; el.classList.remove('active'); onR(); } });
 }
 bindHold(document.getElementById('mcLeft'),()=>input.left=true,()=>input.left=false);
 bindHold(document.getElementById('mcRight'),()=>input.right=true,()=>input.right=false);
 bindHold(document.getElementById('mcJump'),()=>pressJump(),()=>releaseJump());
+function canvasPointerClear(){
+  if(mc.classList.contains('visible')) return;
+  input.left=false; input.right=false; releaseJump();
+}
 canvas.addEventListener('pointerdown',e=>{
   if(state!==STATE.PLAY||mc.classList.contains('visible')) return;
   const x=e.clientX; if(x<W*0.3) input.left=true; else if(x>W*0.7) input.right=true; else pressJump();
 });
-canvas.addEventListener('pointerup',()=>{ if(mc.classList.contains('visible'))return; input.left=input.right=false; releaseJump(); });
+canvas.addEventListener('pointerup', canvasPointerClear);
+canvas.addEventListener('pointercancel', canvasPointerClear);
+canvas.addEventListener('lostpointercapture', canvasPointerClear);
 
 let audioCtx=null, bgmNodes=null, bgmTimer=null, bgmStep=0;
 let masterGain=null, sfxGain=null, bgmGain=null;
@@ -471,7 +501,8 @@ function unlockAndPlayBgm(){
 function stopBgm(){ if(bgmTimer){clearInterval(bgmTimer);bgmTimer=null;} if(bgmNodes){ try{bgmNodes.drone.stop();}catch(e){} try{if(bgmNodes.drone2)bgmNodes.drone2.stop();}catch(e){} bgmNodes=null;} }
 
 const GRAVITY=0.78, MOVE_ACC=0.95, MOVE_MAX=5.2, FRICTION_G=0.76, FRICTION_A=0.92;
-const JUMP_V=-12.4, JUMP_HOLD_FORCE=-0.42, JUMP_HOLD_MAX_FRAMES=12, COYOTE_MAX=10, DEPTH=12;
+const JUMP_V=-12.4, JUMP_HOLD_FORCE=-0.35, JUMP_HOLD_MAX_FRAMES=10, COYOTE_MAX=8, DEPTH=12;
+const VX_MAX=6.4, VY_MAX=15, VY_MIN=-13.5, CARRY_DX_MAX=3.5, WIND_AIR=0.45;
 const WORLD_MARGIN=420;
 
 let player, platforms, particles, decorations, landmarks, birds, wires, aunties, projectiles;
@@ -715,7 +746,7 @@ function clearPlayerFlags(pl){
 }
 function resetGame(fromCheckpoint){
   /* Full clean slate — never respawn submerged (V1.6.1) */
-  input.left=false; input.right=false; input.jumpHeld=false; input.jumpPressed=false; jumpBuffer=0;
+  clearAllInput();
   birds=[]; aunties=[]; projectiles=[]; wires=[]; standingPlat=null; standTime=0; warnText='';
   wind={active:false,vx:0,timer:0,cooldown:220,warn:0};
   waterSurge={active:false,timer:0,cooldown:480,warn:0};
@@ -822,11 +853,31 @@ function updateSink(){
   return true;
 }
 
+function clampPlayerVel(){
+  if(player.vx>VX_MAX) player.vx=VX_MAX;
+  if(player.vx<-VX_MAX) player.vx=-VX_MAX;
+  if(player.vy>VY_MAX) player.vy=VY_MAX;
+  if(player.vy<VY_MIN) player.vy=VY_MIN;
+}
 function tryJump(){
-  if(!(player.onGround||player.coyote>0)||player.stun>0) return false;
-  player.vy=JUMP_V; player.onGround=false; player.coyote=0;
+  if(!(player.onGround||player.coyote>0)||player.stun>0||player.sinking) return false;
+  // Inherit a little moving-platform velocity, then detach (never keep stale carry)
+  if(standingPlat && (standingPlat.sway||standingPlat.move) && standingPlat._lx!==undefined){
+    const nx=platWorldX(standingPlat);
+    let idx=nx-standingPlat._lx;
+    if(idx>CARRY_DX_MAX) idx=CARRY_DX_MAX;
+    if(idx<-CARRY_DX_MAX) idx=-CARRY_DX_MAX;
+    player.vx+=idx;
+    standingPlat._lx=undefined;
+  }
+  standingPlat=null; standTime=0;
+  player.vy=JUMP_V; // absolute impulse — never additive
+  player.onGround=false; player.coyote=0;
   player.jumpHoldFrames=JUMP_HOLD_MAX_FRAMES; player.stretch=1.2; player.squish=0.82;
-  jumpBuffer=0; input.jumpPressed=false; standingPlat=null; standTime=0; sfxJump(); return true;
+  jumpBuffer=0; input.jumpPressed=false;
+  jumpLocked=true; // require release before next jump arm
+  clampPlayerVel();
+  sfxJump(); return true;
 }
 
 function updateHazardsMeta(){
@@ -895,26 +946,43 @@ function updatePlayer(){
   if(left){ player.vx-=acc; player.facing=-1; }
   if(right){ player.vx+=acc; player.facing=1; }
   if(!left&&!right) player.vx*=(player.onGround?fricG:FRICTION_A);
-  // Wind
-  if(wind.active) player.vx+=wind.vx;
-  player.vx=Math.max(-maxV-(wind.active?1.2:0), Math.min(maxV+(wind.active?1.2:0), player.vx));
+  // Wind — softer in air so jumps don't rocket sideways
+  if(wind.active){
+    const wMul = player.onGround ? 1 : WIND_AIR;
+    player.vx += wind.vx * wMul;
+  }
+  const windCap = wind.active && player.onGround ? 0.8 : 0;
+  if(player.vx>maxV+windCap) player.vx=maxV+windCap;
+  if(player.vx<-maxV-windCap) player.vx=-maxV-windCap;
 
+  // Jump: edge/buffer once — never re-fire from sticky hold mid-air via coyote refresh
   if(jumpBuffer>0) jumpBuffer--;
-  if((jumpBuffer>0||input.jumpPressed)&&(player.onGround||player.coyote>0)) tryJump();
+  const wantJump = (jumpBuffer>0||input.jumpPressed) && !jumpLocked;
+  if(wantJump && (player.onGround||player.coyote>0)) tryJump();
   input.jumpPressed=false;
-  if(player.jumpHoldFrames>0&&input.jumpHeld&&player.vy<0){ player.vy+=JUMP_HOLD_FORCE; player.jumpHoldFrames--; }
-  else if(!input.jumpHeld) player.jumpHoldFrames=0;
+  // Variable jump height: limited upward only while rising
+  if(player.jumpHoldFrames>0 && input.jumpHeld && player.vy<0 && player.vy>VY_MIN){
+    player.vy += JUMP_HOLD_FORCE;
+    player.jumpHoldFrames--;
+  } else if(!input.jumpHeld){
+    player.jumpHoldFrames=0;
+  }
 
-  player.vy+=GRAVITY; if(player.vy>17) player.vy=17;
+  player.vy+=GRAVITY;
+  clampPlayerVel();
   player.x+=player.vx;
 
-  // Carry with moving platform
+  // Carry with moving platform — CAP delta (stale _lx was launching players)
   if(player.onGround && standingPlat && (standingPlat.sway||standingPlat.move) && !standingPlat.falling){
     const nx=platWorldX(standingPlat);
-    // approximate carry via delta — store last
-    if(standingPlat._lx!==undefined) player.x += nx - standingPlat._lx;
-    standingPlat._lx = nx;
-    standingPlat.x = nx;
+    if(standingPlat._lx!==undefined){
+      let dx=nx-standingPlat._lx;
+      if(dx>CARRY_DX_MAX) dx=CARRY_DX_MAX;
+      if(dx<-CARRY_DX_MAX) dx=-CARRY_DX_MAX;
+      player.x+=dx;
+    }
+    standingPlat._lx=nx;
+    standingPlat.x=nx;
   }
 
   const prevFeet=player.y+player.h/2;
@@ -925,15 +993,15 @@ function updatePlayer(){
   if(player.vy>=0){
     let best=null, bestY=1e9, bestPx=0;
     const feet=player.y+player.h/2;
-    const pad=Math.max(player.vy,0)+5;
+    const pad=Math.min(12, Math.max(player.vy,0)+4); // tighter — no far snap
     for(let i=0;i<platforms.length;i++){
       const p=platforms[i];
       if(p.gone||p.falling) continue;
       const px=platWorldX(p); p.x=px;
       if(player.x+player.w/2>px+3 && player.x-player.w/2<px+p.w-3 &&
-         prevFeet<=p.y+5 && feet>=p.y-1 && feet<=p.y+p.h+pad){
-        // Prefer highest deck (lowest y) to avoid sinking into stacked props
-        if(p.y < bestY){ best=p; bestY=p.y; bestPx=px; }
+         prevFeet<=p.y+4 && feet>=p.y-0.5 && feet<=p.y+p.h+pad){
+        // Prefer closest deck below feet (not a far higher platform)
+        if(p.y < bestY && p.y >= prevFeet-8){ best=p; bestY=p.y; bestPx=px; }
       }
     }
     if(best){
@@ -942,15 +1010,19 @@ function updatePlayer(){
       if(!wasGround&&player.vy>2.5){ spawnDust(player.x,p.y); sfxLand(); }
       player.vy=0; player.onGround=true; player.coyote=COYOTE_MAX;
       player.squish=1.12; player.stretch=0.9;
-      landed=p; p._lx=px;
-      if(jumpBuffer>0) tryJump();
+      landed=p;
+      p._lx=px; // always refresh — prevents stale carry teleport after re-land
+      // Only coyote-buffer land-jump if still a fresh press (not sticky lock)
+      if(jumpBuffer>0 && !jumpLocked) tryJump();
       if(p.checkpoint&&p.y<checkpointY-8){ checkpointY=p.y; sfxCheckpoint(); spawnSpark(px+p.w/2,p.y); }
       else if(p.checkpoint&&checkpointY===0&&p.y<=0) checkpointY=p.y;
     }
   }
 
   if(landed){
-    if(standingPlat!==landed){ standingPlat=landed; standTime=0; landed._lx=platWorldX(landed); }
+    if(standingPlat!==landed){ standingPlat=landed; standTime=0; }
+    standingPlat=landed;
+    landed._lx=platWorldX(landed);
     standTime++;
     if(landed.slippery) warnText='หลังคาเปียก! Wet roof!';
     else if(landed.collapse) warnText= standTime>landed.collapseMax*0.35 ? 'ป้ายหลวม! Sign unstable!' : 'ป้ายสั่น… Sign creaks…';
@@ -982,9 +1054,11 @@ function updatePlayer(){
       player.stun=22; player.vx+=(player.x<cx?-1:1)*4.5;
       if(player.vy<0) player.vy*=0.2; player.vy+=3;
       player.onGround=false; spawnDust(player.x,player.y); warnText='สายไฟ! Wire!';
+      clampPlayerVel();
     }
   }
 
+  clampPlayerVel();
   player.anim+=Math.abs(player.vx)*0.14+0.04;
   player.squish+=(1-player.squish)*0.18; player.stretch+=(1-player.stretch)*0.18;
   const h=Math.max(0,Math.floor(-player.y/10));
@@ -1048,6 +1122,7 @@ function updateAunties(){
       if(player.vy<0) player.vy*=0.35;
       player.vy += 2.2;
       player.onGround=false;
+      clampPlayerVel();
       warnText = p.kind==='noodles' ? 'ก๋วยเตี๋ยว! Noodles!' : 'เสื้อผ้า! Clothes!';
       spawnDust(player.x, player.y);
       projectiles.splice(i,1);
@@ -1122,12 +1197,13 @@ function updateBirds(){
        Math.abs(b.x-player.x)<(b.w/2+player.w/2-4) && Math.abs(b.y-player.y)<(b.h/2+player.h/2-6)){
       b.hit=true; sfxBird();
       // Stronger knock — into fall
-      player.stun=26;
-      player.vx+=(b.vx>0?1:-1)*5.5;
-      player.vy=Math.max(player.vy, 4.5); // force downward fall feel
-      if(player.vy<2) player.vy=4;
+      player.stun=22;
+      player.vx+=(b.vx>0?1:-1)*3.8;
+      player.vy=Math.max(player.vy, 3.5);
+      if(player.vy<2) player.vy=3.2;
       player.onGround=false; player.coyote=0;
       standingPlat=null; standTime=0;
+      clampPlayerVel();
       spawnDust(player.x,player.y); warnText='นกชน! Bird!';
     }
   }
