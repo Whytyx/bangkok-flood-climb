@@ -100,7 +100,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#7a8790;font-family:
     <div class="mc-zone" id="mcRight" role="button" aria-label="Right">▶</div>
     <div class="mc-zone" id="mcJump" role="button" aria-label="Jump">⬆</div>
   </div>
-  <div id="watermark">BANGKOK FLOOD CLIMB V1.6.1</div>
+  <div id="watermark">BANGKOK FLOOD CLIMB V1.6.2</div>
 </div>
 <script>
 (function(){
@@ -315,11 +315,37 @@ canvas.addEventListener('pointerdown',e=>{
 canvas.addEventListener('pointerup',()=>{ if(mc.classList.contains('visible'))return; input.left=input.right=false; releaseJump(); });
 
 let audioCtx=null, bgmNodes=null, bgmTimer=null, bgmStep=0;
-function ensureAudio(){ if(!audioCtx) audioCtx=new (window.AudioContext||window.webkitAudioContext)(); if(audioCtx.state==='suspended') audioCtx.resume(); }
+let masterGain=null, sfxGain=null, bgmGain=null;
+function ensureAudio(){
+  try{
+    if(!audioCtx) audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+    if(!masterGain){
+      masterGain=audioCtx.createGain(); masterGain.gain.value=1;
+      masterGain.connect(audioCtx.destination);
+      sfxGain=audioCtx.createGain(); sfxGain.gain.value=1; sfxGain.connect(masterGain);
+      bgmGain=audioCtx.createGain(); bgmGain.gain.value=0.9; bgmGain.connect(masterGain);
+    }
+    if(audioCtx.state==='suspended') audioCtx.resume();
+    applyMuteGains();
+  }catch(e){}
+  return audioCtx;
+}
+function applyMuteGains(){
+  if(!masterGain||!audioCtx) return;
+  try{ masterGain.gain.setValueAtTime(muted?0:1, audioCtx.currentTime); }catch(e){}
+}
 function beep(freq,dur,type,vol){
   if(muted) return;
-  try{ ensureAudio(); const o=audioCtx.createOscillator(),g=audioCtx.createGain(); o.type=type||'triangle'; o.frequency.value=freq; g.gain.value=vol||0.045;
-    g.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+dur); o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime+dur); }catch(e){}
+  try{
+    ensureAudio();
+    const o=audioCtx.createOscillator(), g=audioCtx.createGain();
+    o.type=type||'triangle'; o.frequency.value=freq;
+    const v=vol||0.05;
+    g.gain.setValueAtTime(v, audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime+Math.max(0.05,dur));
+    o.connect(g); g.connect(sfxGain||audioCtx.destination);
+    o.start(); o.stop(audioCtx.currentTime+dur+0.02);
+  }catch(e){}
 }
 function sfxJump(){ beep(240,0.06,'triangle',0.04); setTimeout(()=>beep(340,0.05,'triangle',0.03),30); }
 function sfxLand(){ beep(95,0.04,'sine',0.03); }
@@ -345,75 +371,81 @@ const LT_BASS=[0,0,4,4, 0,2,5,4, 0,0,5,2, 0,4,2,0];
 const LT_KHLONG=[1,0,0,1, 1,0,1,0, 1,0,0,1, 0,1,1,0]; // ramwong / luk-thung clap feel
 let ltPhrase=0;
 function playLtNote(freq,dur,type,vol,slideFrom){
-  if(muted||!audioCtx) return;
+  if(muted) return;
   try{
+    ensureAudio();
     const t=audioCtx.currentTime;
-    const o=audioCtx.createOscillator(), o2=audioCtx.createOscillator();
-    const g=audioCtx.createGain(), f=audioCtx.createBiquadFilter();
-    o.type=type||'triangle'; o2.type='sine';
-    f.type='lowpass'; f.frequency.value=1800; f.Q.value=0.7;
-    const startF = slideFrom || freq* (Math.random()<0.35?0.92:1);
+    const o=audioCtx.createOscillator(), g=audioCtx.createGain(), f=audioCtx.createBiquadFilter();
+    o.type=type||'triangle';
+    f.type='lowpass'; f.frequency.value=2000;
+    const startF=Math.max(40, slideFrom||freq*0.94);
     o.frequency.setValueAtTime(startF, t);
-    o.frequency.exponentialRampToValueAtTime(Math.max(40,freq), t+0.06); // Thai-ish slide into note
-    // light vibrato
-    o.frequency.setValueAtTime(freq, t+0.06);
-    try{
-      const lfo=audioCtx.createOscillator(), lg=audioCtx.createGain();
-      lfo.frequency.value=5.5; lg.gain.value=freq*0.008;
-      lfo.connect(lg); lg.connect(o.frequency); lfo.start(t); lfo.stop(t+dur+0.05);
-    }catch(e){}
-    o2.frequency.value=freq*2; // soft organ octave
-    g.gain.setValueAtTime(0.001,t);
-    g.gain.exponentialRampToValueAtTime(vol, t+0.04);
-    g.gain.setValueAtTime(vol*0.85, t+dur*0.45);
+    o.frequency.exponentialRampToValueAtTime(Math.max(40,freq), t+0.05);
+    g.gain.setValueAtTime(0.001, t);
+    g.gain.exponentialRampToValueAtTime(vol, t+0.035);
     g.gain.exponentialRampToValueAtTime(0.001, t+dur);
-    o.connect(f); o2.connect(f); f.connect(g); g.connect(audioCtx.destination);
-    const g2=audioCtx.createGain(); g2.gain.value=vol*0.25; o2.connect(g2); g2.connect(audioCtx.destination);
-    o.start(t); o2.start(t); o.stop(t+dur+0.04); o2.stop(t+dur+0.04);
+    o.connect(f); f.connect(g); g.connect(bgmGain||audioCtx.destination);
+    o.start(t); o.stop(t+dur+0.03);
+    const o2=audioCtx.createOscillator(), g2=audioCtx.createGain();
+    o2.type='sine'; o2.frequency.value=freq*2;
+    g2.gain.setValueAtTime(vol*0.22, t);
+    g2.gain.exponentialRampToValueAtTime(0.001, t+dur*0.85);
+    o2.connect(g2); g2.connect(bgmGain||audioCtx.destination);
+    o2.start(t); o2.stop(t+dur+0.02);
   }catch(e){}
 }
 function playKhlong(){
-  if(muted||!audioCtx) return;
+  if(muted) return;
   try{
+    ensureAudio();
     const t=audioCtx.currentTime;
     const o=audioCtx.createOscillator(), g=audioCtx.createGain();
-    o.type='triangle'; o.frequency.setValueAtTime(120,t); o.frequency.exponentialRampToValueAtTime(55,t+0.08);
-    g.gain.setValueAtTime(0.04,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.12);
-    o.connect(g); g.connect(audioCtx.destination); o.start(t); o.stop(t+0.14);
+    o.type='triangle'; o.frequency.setValueAtTime(130,t); o.frequency.exponentialRampToValueAtTime(55,t+0.09);
+    g.gain.setValueAtTime(0.05,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.12);
+    o.connect(g); g.connect(sfxGain||bgmGain||audioCtx.destination); o.start(t); o.stop(t+0.14);
   }catch(e){}
 }
 function startBgm(){
-  stopBgm(); if(muted) return; ensureAudio();
+  stopBgm();
+  if(muted) return;
+  ensureAudio();
+  try{ if(audioCtx.state==='suspended') audioCtx.resume(); }catch(e){}
+  applyMuteGains();
   try{
     const drone=audioCtx.createOscillator(), drone2=audioCtx.createOscillator(), dg=audioCtx.createGain();
     drone.type='sine'; drone.frequency.value=98;
-    drone2.type='sine'; drone2.frequency.value=147; // fifth drone — folk organ
-    dg.gain.value=0.01;
-    drone.connect(dg); drone2.connect(dg); dg.connect(audioCtx.destination);
+    drone2.type='sine'; drone2.frequency.value=147;
+    dg.gain.value=0.015;
+    drone.connect(dg); drone2.connect(dg); dg.connect(bgmGain||audioCtx.destination);
     drone.start(); drone2.start();
     bgmNodes={drone,drone2,dg};
   }catch(e){ bgmNodes=null; }
   bgmStep=0; ltPhrase=0;
-  const beatMs=290;
   bgmTimer=setInterval(()=>{
-    if(muted||(state!==STATE.PLAY&&state!==STATE.TITLE&&state!==STATE.PAUSE)) return;
-    ensureAudio();
-    const phrase=LT_PHRASES[ltPhrase%LT_PHRASES.length];
-    const mi=phrase[bgmStep%phrase.length];
-    if(mi>=0){
-      const freq=LT_SCALE[mi%LT_SCALE.length];
-      const dur=(bgmStep%8===7)?0.42:0.26;
-      playLtNote(freq, dur, 'triangle', 0.038, freq*0.88);
-      if(bgmStep%4===2) playLtNote(freq*1.5, 0.16, 'sine', 0.012);
-    }
-    if(bgmStep%2===0){
-      const bi=LT_BASS[(bgmStep/2|0)%LT_BASS.length];
-      playLtNote(LT_SCALE[bi]*0.5, 0.32, 'sine', 0.028);
-    }
-    if(LT_KHLONG[bgmStep%LT_KHLONG.length]) playKhlong();
-    bgmStep++;
-    if(bgmStep%16===0) ltPhrase++;
-  }, beatMs);
+    if(muted || state===STATE.DEAD) return;
+    try{
+      ensureAudio();
+      const phrase=LT_PHRASES[ltPhrase%LT_PHRASES.length];
+      const mi=phrase[bgmStep%phrase.length];
+      if(mi>=0){
+        const freq=LT_SCALE[mi%LT_SCALE.length];
+        playLtNote(freq, (bgmStep%8===7)?0.44:0.27, 'triangle', 0.045, freq*0.9);
+        if(bgmStep%4===2) playLtNote(freq*1.5, 0.15, 'sine', 0.015);
+      }
+      if(bgmStep%2===0){
+        const bi=LT_BASS[(bgmStep/2|0)%LT_BASS.length];
+        playLtNote(LT_SCALE[bi]*0.5, 0.34, 'sine', 0.034);
+      }
+      if(LT_KHLONG[bgmStep%LT_KHLONG.length]) playKhlong();
+      bgmStep++;
+      if(bgmStep%16===0) ltPhrase++;
+    }catch(e){}
+  }, 300);
+}
+function unlockAndPlayBgm(){
+  ensureAudio();
+  applyMuteGains();
+  if(!muted) startBgm();
 }
 function stopBgm(){ if(bgmTimer){clearInterval(bgmTimer);bgmTimer=null;} if(bgmNodes){ try{bgmNodes.drone.stop();}catch(e){} try{if(bgmNodes.drone2)bgmNodes.drone2.stop();}catch(e){} bgmNodes=null;} }
 
@@ -581,7 +613,7 @@ function resetGame(fromCheckpoint){
   }
   clearPlayerFlags(player);
   // Water ALWAYS placed safely BELOW spawn (greater y = lower). Never keep drowned water level.
-  waterBaseSpeed=0.65;
+  waterBaseSpeed=0.18;
   waterSpeed=waterBaseSpeed;
   waterY = player.y + 280;
   makeDecorations(); makeRain();
@@ -958,7 +990,8 @@ function updateBirds(){
 function die(){
   if(state===STATE.DEAD) return;
   state=STATE.DEAD; warnText='';
-  if(player){ player.alive=false; /* keep sinking pose for last frame; cleared on reset */ }
+  stopBgm();
+  if(player){ player.alive=false; }
   if(scoreHeight>bestHeight){ bestHeight=scoreHeight; localStorage.setItem('bfc_best',String(bestHeight)); }
   document.getElementById('hud').style.display='none';
   document.getElementById('pauseScreen').classList.add('hidden');
@@ -969,21 +1002,15 @@ function die(){
 }
 
 function updateWater(){
-  /* V1.6: water rises & chases; NO soft floor (that prevented drowning) */
-  if(player && player.sinking){
-    // During sink, keep water roughly at chest for visual
-    waterSpeed = 0.2;
-    return;
-  }
+  /* V1.6.2: slower visible chase */
+  if(player && player.sinking){ waterSpeed = 0.15; return; }
   const feet = player.y + player.h/2;
   const gap = waterY - feet;
-  const desiredGap = Math.max(120, 280 - scoreHeight * 0.45);
-
-  let rise = waterBaseSpeed + scoreHeight * 0.004;
-  if(waterSurge.active) rise *= 2.8;
-  if(gap > desiredGap) rise += Math.min(5.5, (gap - desiredGap) * 0.03);
-  if(gap < 200 && gap > 40) rise += 0.4;
-  // When player is falling into water (gap small/negative), keep rising — don't push away
+  const desiredGap = Math.max(160, 340 - scoreHeight * 0.25);
+  let rise = waterBaseSpeed + scoreHeight * 0.0012;
+  if(waterSurge.active) rise *= 1.85;
+  if(gap > desiredGap) rise += Math.min(1.15, (gap - desiredGap) * 0.008);
+  if(gap < 180 && gap > 50) rise += 0.08;
   waterY -= rise;
   waterSpeed = rise;
 }
@@ -1198,31 +1225,36 @@ function loop(){
 }
 
 function startGame(){
-  ensureAudio(); startBgm(); sfxStart();
+  unlockAndPlayBgm(); sfxStart();
   state=STATE.PLAY; resetGame(false); showPlayUI();
 }
 function pauseGame(){ if(state!==STATE.PLAY) return; state=STATE.PAUSE; document.getElementById('pauseScreen').classList.remove('hidden'); mc.classList.remove('visible'); refreshSwatchUI(); drawPreviews(); }
 function resumeGame(){ state=STATE.PLAY; document.getElementById('pauseScreen').classList.add('hidden'); if(isMobile()) mc.classList.add('visible'); }
-function goTitle(){ state=STATE.TITLE; document.getElementById('gameOverScreen').classList.add('hidden'); document.getElementById('pauseScreen').classList.add('hidden'); document.getElementById('titleScreen').classList.remove('hidden'); document.getElementById('hud').style.display='none'; mc.classList.remove('visible'); }
+function goTitle(){ state=STATE.TITLE; document.getElementById('gameOverScreen').classList.add('hidden'); document.getElementById('pauseScreen').classList.add('hidden'); document.getElementById('titleScreen').classList.remove('hidden'); document.getElementById('hud').style.display='none'; mc.classList.remove('visible'); unlockAndPlayBgm(); }
 
 document.getElementById('startBtn').addEventListener('click', startGame);
 document.getElementById('retryBtn').addEventListener('click',()=>{
-  ensureAudio(); startBgm();
   state=STATE.PLAY;
-  resetGame(false); // full reset after drown — never stuck underwater
+  resetGame(false);
   showPlayUI();
+  unlockAndPlayBgm();
   sfxStart();
 });
 document.getElementById('menuBtn').addEventListener('click', goTitle);
 document.getElementById('pauseMenuBtn').addEventListener('click', goTitle);
 document.getElementById('resumeBtn').addEventListener('click', resumeGame);
 document.getElementById('pauseBtn').addEventListener('click', pauseGame);
-document.getElementById('restartBtn').addEventListener('click',()=>{ if(state===STATE.PLAY||state===STATE.PAUSE||state===STATE.DEAD){ state=STATE.PLAY; resetGame(false); showPlayUI(); sfxStart(); }});
-document.getElementById('muteBtn').addEventListener('click',()=>{ muted=!muted; document.getElementById('muteBtn').textContent=muted?'🔇':'🔊'; if(muted) stopBgm(); else startBgm(); });
+document.getElementById('restartBtn').addEventListener('click',()=>{ if(state===STATE.PLAY||state===STATE.PAUSE||state===STATE.DEAD){ state=STATE.PLAY; resetGame(false); showPlayUI(); unlockAndPlayBgm(); sfxStart(); }});
+document.getElementById('muteBtn').addEventListener('click',()=>{
+  muted=!muted;
+  document.getElementById('muteBtn').textContent=muted?'🔇':'🔊';
+  ensureAudio(); applyMuteGains();
+  if(muted) stopBgm(); else unlockAndPlayBgm();
+});
 
 resize(); refreshSwatchUI();
 generateInitialPlatforms(); player=makePlayer(0,-19); player.onGround=true;
-waterY=190; waterBaseSpeed=0.65; birds=[]; aunties=[]; projectiles=[]; wires=wires||[]; particles=[];
+waterY=190; waterBaseSpeed=0.18; birds=[]; aunties=[]; projectiles=[]; wires=wires||[]; particles=[];
 makeDecorations(); makeRain(); snapCamera(true); frame=0; drawPreviews(); loop();
 })();
 

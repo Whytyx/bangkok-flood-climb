@@ -1,7 +1,7 @@
 # Bangkok Flood Climb
 
-## V1.6.1
-- Fixed Try Again stuck underwater: full reset of position, water, sink state, velocity, UI
-- Drown / sink / stylized climber from V1.6
+## V1.6.2
+- Flood rise slowed (still a visible chase)
+- Audio fixed: luk thung BGM + SFX resume after mute / restart / drown
 
 **Live:** https://whytyx.github.io/bangkok-flood-climb/
