@@ -100,7 +100,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#7a8790;font-family:
     <div class="mc-zone" id="mcRight" role="button" aria-label="Right">▶</div>
     <div class="mc-zone" id="mcJump" role="button" aria-label="Jump">⬆</div>
   </div>
-  <div id="watermark">BANGKOK FLOOD CLIMB V1.6</div>
+  <div id="watermark">BANGKOK FLOOD CLIMB V1.6.1</div>
 </div>
 <script>
 (function(){
@@ -552,21 +552,51 @@ function spawnBird(nearY){
   birds.push({ x:player.x+dir*(W*0.5+rand(30,100)), y:nearY-rand(30,150), vx:-dir*rand(2.4,4.0), bob:Math.random()*Math.PI*2, w:28,h:16, wing:0, hit:false });
 }
 
+function clearPlayerFlags(pl){
+  pl.alive=true; pl.sinking=false; pl.sinkTimer=0; pl.sinkAlpha=1;
+  pl.stun=0; pl.vx=0; pl.vy=0; pl.jumpHoldFrames=0;
+  pl.onGround=true; pl.coyote=COYOTE_MAX;
+  pl.squish=1; pl.stretch=1; pl.anim=0;
+}
 function resetGame(fromCheckpoint){
-  input.jumpPressed=false; jumpBuffer=0; birds=[]; aunties=[]; projectiles=[]; standingPlat=null; standTime=0; warnText='';
+  /* Full clean slate — never respawn submerged (V1.6.1) */
+  input.left=false; input.right=false; input.jumpHeld=false; input.jumpPressed=false; jumpBuffer=0;
+  birds=[]; aunties=[]; projectiles=[]; wires=[]; standingPlat=null; standTime=0; warnText='';
   wind={active:false,vx:0,timer:0,cooldown:200};
   waterSurge={active:false,timer:0,cooldown:450};
-  if(!fromCheckpoint || checkpointY===undefined){
+  particles=[];
+
+  const useCheckpoint = !!(fromCheckpoint && checkpointY!==undefined && platforms && platforms.length);
+  if(!useCheckpoint){
     generateInitialPlatforms();
-    player=makePlayer(climbCenterX,-19); player.onGround=true; player.coyote=COYOTE_MAX;
-    checkpointY=0; waterY=player.y+280; waterBaseSpeed=0.65; waterSpeed=waterBaseSpeed; highestY=0;
+    player=makePlayer(climbCenterX,-19);
+    checkpointY=0; highestY=0; scoreHeight=0;
   } else {
     const cp=platforms.find(p=>p.checkpoint&&Math.abs(p.y-checkpointY)<5)||platforms[0];
-    player=makePlayer(platWorldX(cp)+cp.w/2, cp.y-19); player.onGround=true; player.coyote=COYOTE_MAX;
-    waterY=Math.min(waterY, player.y+260);
+    // Revive collapsed checkpoints
+    cp.gone=false; cp.falling=false; cp.fallVy=0;
+    player=makePlayer(platWorldX(cp)+cp.w/2, cp.y - 19);
+    scoreHeight=Math.max(0, Math.floor(-cp.y/10));
+    highestY=scoreHeight;
   }
-  player.alive=true; player.stun=0; player.sinking=false; player.sinkTimer=0; player.sinkAlpha=1; scoreHeight=0; particles=[];
-  makeDecorations(); makeRain(); frame=0; snapCamera(true); extendPlatforms();
+  clearPlayerFlags(player);
+  // Water ALWAYS placed safely BELOW spawn (greater y = lower). Never keep drowned water level.
+  waterBaseSpeed=0.65;
+  waterSpeed=waterBaseSpeed;
+  waterY = player.y + 280;
+  makeDecorations(); makeRain();
+  frame=0;
+  snapCamera(true);
+  extendPlatforms();
+}
+function showPlayUI(){
+  document.getElementById('titleScreen').classList.add('hidden');
+  document.getElementById('gameOverScreen').classList.add('hidden');
+  document.getElementById('pauseScreen').classList.add('hidden');
+  document.getElementById('hud').style.display='flex';
+  document.getElementById('hazardWarn').textContent='';
+  if(isMobile()) mc.classList.add('visible');
+  else mc.classList.remove('visible');
 }
 
 function snapCamera(hard){
@@ -928,8 +958,10 @@ function updateBirds(){
 function die(){
   if(state===STATE.DEAD) return;
   state=STATE.DEAD; warnText='';
+  if(player){ player.alive=false; /* keep sinking pose for last frame; cleared on reset */ }
   if(scoreHeight>bestHeight){ bestHeight=scoreHeight; localStorage.setItem('bfc_best',String(bestHeight)); }
   document.getElementById('hud').style.display='none';
+  document.getElementById('pauseScreen').classList.add('hidden');
   document.getElementById('gameOverScreen').classList.remove('hidden');
   document.getElementById('finalHeight').textContent=scoreHeight+' m';
   document.getElementById('bestHeight').textContent='Best: '+bestHeight+' m';
@@ -1166,24 +1198,26 @@ function loop(){
 }
 
 function startGame(){
-  ensureAudio(); startBgm(); sfxStart(); state=STATE.PLAY; resetGame(false);
-  document.getElementById('titleScreen').classList.add('hidden');
-  document.getElementById('gameOverScreen').classList.add('hidden');
-  document.getElementById('pauseScreen').classList.add('hidden');
-  document.getElementById('hud').style.display='flex';
-  if(isMobile()) mc.classList.add('visible');
+  ensureAudio(); startBgm(); sfxStart();
+  state=STATE.PLAY; resetGame(false); showPlayUI();
 }
 function pauseGame(){ if(state!==STATE.PLAY) return; state=STATE.PAUSE; document.getElementById('pauseScreen').classList.remove('hidden'); mc.classList.remove('visible'); refreshSwatchUI(); drawPreviews(); }
 function resumeGame(){ state=STATE.PLAY; document.getElementById('pauseScreen').classList.add('hidden'); if(isMobile()) mc.classList.add('visible'); }
 function goTitle(){ state=STATE.TITLE; document.getElementById('gameOverScreen').classList.add('hidden'); document.getElementById('pauseScreen').classList.add('hidden'); document.getElementById('titleScreen').classList.remove('hidden'); document.getElementById('hud').style.display='none'; mc.classList.remove('visible'); }
 
 document.getElementById('startBtn').addEventListener('click', startGame);
-document.getElementById('retryBtn').addEventListener('click',()=>{ ensureAudio(); startBgm(); state=STATE.PLAY; resetGame(true); document.getElementById('gameOverScreen').classList.add('hidden'); document.getElementById('hud').style.display='flex'; if(isMobile()) mc.classList.add('visible'); sfxStart(); });
+document.getElementById('retryBtn').addEventListener('click',()=>{
+  ensureAudio(); startBgm();
+  state=STATE.PLAY;
+  resetGame(false); // full reset after drown — never stuck underwater
+  showPlayUI();
+  sfxStart();
+});
 document.getElementById('menuBtn').addEventListener('click', goTitle);
 document.getElementById('pauseMenuBtn').addEventListener('click', goTitle);
 document.getElementById('resumeBtn').addEventListener('click', resumeGame);
 document.getElementById('pauseBtn').addEventListener('click', pauseGame);
-document.getElementById('restartBtn').addEventListener('click',()=>{ if(state===STATE.PLAY||state===STATE.PAUSE){ resetGame(false); resumeGame(); sfxStart(); }});
+document.getElementById('restartBtn').addEventListener('click',()=>{ if(state===STATE.PLAY||state===STATE.PAUSE||state===STATE.DEAD){ state=STATE.PLAY; resetGame(false); showPlayUI(); sfxStart(); }});
 document.getElementById('muteBtn').addEventListener('click',()=>{ muted=!muted; document.getElementById('muteBtn').textContent=muted?'🔇':'🔊'; if(muted) stopBgm(); else startBgm(); });
 
 resize(); refreshSwatchUI();
