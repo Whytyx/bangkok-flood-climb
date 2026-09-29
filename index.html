@@ -4,8 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="BangkokFloodClimb">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#7a8790">
+<meta name="description" content="Only-Up climb through flooded Bangkok — rooftops, rising water, ป้า, luk thung.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
 <title>Bangkok Flood Climb</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
@@ -100,7 +106,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#7a8790;font-family:
     <div class="mc-zone" id="mcRight" role="button" aria-label="Right">▶</div>
     <div class="mc-zone" id="mcJump" role="button" aria-label="Jump">⬆</div>
   </div>
-  <div id="watermark">BANGKOK FLOOD CLIMB V1.7.1</div>
+  <div id="watermark">BANGKOK FLOOD CLIMB V1.7.2</div>
 </div>
 <script>
 (function(){
@@ -2133,6 +2139,9 @@ resize(); refreshSwatchUI();
 generateInitialPlatforms(); player=makePlayer(0,-19); player.onGround=true;
 waterY=190; waterBaseSpeed=0.18; birds=[]; aunties=[]; projectiles=[]; wires=wires||[]; particles=[];
 citySil=[]; splashes=[]; makeDecorations(); makeRain(); snapCamera(true); frame=0; drawPreviews(); loop();
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('./sw.js').catch(()=>{});
+}
 })();
 
 </script>
